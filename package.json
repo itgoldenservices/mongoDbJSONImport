@@ -4,7 +4,15 @@
   "description": "Node.js Restful CRUD API with Node.js, Express and MongoDB",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev-post": "DOTENV_CONFIG_PATH=.env.post.dev  node -r dotenv/config server.js",
+    "prod-post": "DOTENV_CONFIG_PATH=.env.post.prod  node -r dotenv/config server.js",
+    "dev-toppings": "DOTENV_CONFIG_PATH=.env.topping.dev  node -r dotenv/config server.js",
+    "prod-toppings": "DOTENV_CONFIG_PATH=.env.topping.prod  node -r dotenv/config server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev-posts-server2": "DOTENV_CONFIG_PATH=.env.post.dev  node -r dotenv/config server2.js",
+    "prod-posts-server2": "DOTENV_CONFIG_PATH=.env.post.prod  node -r dotenv/config server2.js",
+    "dev-toppings-server2": "DOTENV_CONFIG_PATH=.env.topping.dev  node -r dotenv/config server2.js",
+    "prod-toppings-server2": "DOTENV_CONFIG_PATH=.env.topping.prod  node -r dotenv/config server2.js"
   },
   "keywords": [
     "nodejs",
@@ -17,6 +25,7 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "mongoose": "^6.8.1"
   }
