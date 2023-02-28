@@ -1,5 +1,6 @@
+
 module.exports = {
-  url: "your url"
+  url: process.env.URI
 };
 
  

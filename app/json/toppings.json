@@ -1,0 +1,9 @@
+[
+    { "name": "5001", "type": "None" },
+    { "name": "5002", "type": "Glazed" },
+    { "name": "5005", "type": "Sugar" },
+    { "name": "5007", "type": "Powdered Sugar" },
+    { "name": "5006", "type": "Chocolate with Sprinkles" },
+    { "name": "5003", "type": "Chocolate" },
+    { "name": "5004", "type": "Maple" }
+]

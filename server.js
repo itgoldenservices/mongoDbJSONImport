@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const app = express()
-const importData = require('./app/controllers/post.controller').importData;
+const importData = require(process.env.CONTROLLER).importData;
 app.use(express.json())
 app.use(cors())
 

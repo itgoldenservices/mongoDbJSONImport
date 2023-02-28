@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const fs = require('fs')
 const mongoURI = require('../config/db.config').url;
-const Posts = require('../models/post.model');
+const Toppings = require('../models/topping.model');
 
 
 
@@ -14,7 +14,7 @@ exports.importData = () => {
     console.log(data)
 
     try {
-      await Posts.create(data)
+      await Toppings.create(data)
       console.log('data successfully imported')
       // to exit the process
       process.exit()
