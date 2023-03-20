@@ -1865,8 +1865,7 @@ export class AssessmentService extends BaseService {
     }
 
 
-    async setAssessmentIsExempt() {
-        let [netapp, theDir, instructor, cid, typeIndex, assessmentIndex, student, shouldExempt, comment, ignoreIfSubmissionExists] = arguments;
+    async setAssessmentIsExempt(netapp, theDir, instructor, cid, typeIndex, assessmentIndex, student, shouldExempt, comment, ignoreIfSubmissionExists){
 
         if (comment.length) {
             comment = comment.replace(/\+/g, ' ');
