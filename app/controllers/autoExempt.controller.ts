@@ -165,7 +165,7 @@ export class AutoExemptionService {
         return correctGroups;
     }
 
-    handleExemptions(entry: any, pathToFile: string, assessmentsExemted: string[]) {
+    handleExemptions(entry: any, pathToFile: string, retest_name,  assessmentsExemted: string[]) {
         const [, netapp, netappDir, , instructor, cid, , learner, assessment] = pathToFile.split('/');
         const pathToCourse = `/${netapp}/${netappDir}/educator/instructor/${cid}`;
 
@@ -232,7 +232,7 @@ export class AutoExemptionService {
         if (!activeCourses.includes[instructor + '_' + cid])
             return;
 
-        if ((/^exam/).test(assessment) || (/^assignment/).test(assessment)) {
+        if (assessment.startsWith('exam') || assessment.startsWith('assignment')) {
 
             const pathToCourse = `/${netapp}/${netappDir}/educator/${instructor}/${cid}`;
             let pathToExemptionFile = `${pathToCourse}/autoexemption.json`;
@@ -256,14 +256,20 @@ export class AutoExemptionService {
 
                     let submittedIndex = assessment;
 
-                    let assessmentType = "exam";
-                    if ((/^ exam/).test(submittedIndex)) {
-                        submittedIndex = '/\.txt$/';
+                    let assessmentType = "";
+
+                    if (/^exam/.test(submittedIndex)) {
+                        assessmentType = "exam";
+                        submittedIndex.replace(/^exam/, '');
+                    }
+
+                    if (/^assignment/.test(submittedIndex)) {
                         assessmentType = "assignment";
+                        submittedIndex.replace(/^assignment/, '');
                     }
-                    if ((/^ assignment/).test(submittedIndex)) {
-                        submittedIndex = '/\.feedback$/';
-                    }
+
+                    submittedIndex = submittedIndex.replace(/\.txt$/, '').replace(/\.feedback$/, '');
+
                     let pathToExamTemplate;
                     const JSONSubmittedIndex = assessmentType + '_' + submittedIndex;
                     let examTemplate;
@@ -358,7 +364,7 @@ export class AutoExemptionService {
                                 // now we know it is a pretest - we need to read
                                 // in all the question answers
                                 // left off here!
-                                let examResults;
+
                                 if (assessmentType === "exam") {
                                     fs.readFile(pathToFile, function (err, data) {
                                         if (err) throw err;
@@ -418,11 +424,9 @@ export class AutoExemptionService {
 
                                             //now actually do the exemption
                                             if (shouldExempt) {
-                                                assessmentsExemted = handleExemptions({
-                                                    entry: entry, pathToFile: pathToFile,
-                                                    pretest_name: exemptionData[JSONSubmittedIndex].pretest_name,
-                                                    assessments_exempted: assessmentsExemted
-                                                });
+                                                assessmentsExemted = this.handleExemptions(entry, pathToFile, exemptionData[JSONSubmittedIndex].pretest_name,
+                                                    assessmentsExemted
+                                                );
 
                                                 storedPretestName = exemptionData[JSONSubmittedIndex].pretest_name;
 
@@ -492,7 +496,7 @@ export class AutoExemptionService {
                                         }
 
                                         if (shouldExempt) {
-                                            assessmentsExemted = this.handleExemptions(entry, pathToFile, exemptionData.JSONSubmittedIndex.pretest_name, assessmentsExempted);
+                                            assessmentsExemted = this.handleExemptions(entry, pathToFile, exemptionData.JSONSubmittedIndex.pretest_name, assessmentsExemted);
                                             storedPretestName = exemptionData.JSONSubmittedIndex.pretest_name;
 
                                             const studentPageNamesTemp = [...entry.standards];

@@ -1,0 +1,92 @@
+{
+    "version": "2.0",
+    "exam_0004": {
+        "exemption_data": {
+            "7ab046ed747714c024b750eb3ec29bf84cae6272": {
+                "exam_group_requirements": [
+                    {
+                        "group": "1",
+                        "required": "all"
+                    },
+                    {
+                        "group": "2",
+                        "required": "all"
+                    },
+                    {
+                        "group": "3",
+                        "required": "all"
+                    },
+                    {
+                        "group": "4",
+                        "required": "all"
+                    }
+                ],
+                "standards": [
+                    "SC.912.L.18.1",
+                    "SC.912.L.18.11"
+                ],
+                "lessons_to_skip": [
+                    "module02/02_01a.htm",
+                    "module02/02_02a.htm"
+                ],
+                "assessments_to_ex": [
+                    {
+                        "index": "0005",
+                        "name": "02.01 Chemistry of Life",
+                        "path": "exams",
+                        "type": "exam"
+                    },
+                    {
+                        "index": "0005",
+                        "name": "02.02 Early Cells",
+                        "path": "assignments",
+                        "type": "assignment"
+                    }
+                ]
+            },
+            "b979c91a0b2d770fa9f0acd64c9268d6e735d42b": {
+                "exam_group_requirements": [
+                    {
+                        "group": "5",
+                        "required": "all"
+                    },
+                    {
+                        "group": "6",
+                        "required": "all"
+                    },
+                    {
+                        "group": "7",
+                        "required": "all"
+                    },
+                    {
+                        "group": "8",
+                        "required": "all"
+                    },
+                    {
+                        "group": "9",
+                        "required": "all"
+                    }
+                ],
+                "standards": [
+                    "SC.912.L.14.2",
+                    "SC.912.L.14.3"
+                ],
+                "lessons_to_skip": [
+                    "module02/02_03a.htm"
+                ],
+                "assessments_to_ex": [
+                    {
+                        "index": "0006",
+                        "name": "02.03 Cell Structure and Function",
+                        "path": "assignments",
+                        "type": "assignment"
+                    }
+                ]
+            }
+        },
+        "pretest_name": "02.00 Module 02 Pretest"
+    },
+    "usage": {
+        "active": "0"
+    }
+}

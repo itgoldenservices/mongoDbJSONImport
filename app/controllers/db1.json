@@ -1,0 +1,38 @@
+{
+ "_id" : ObjectId("6410bdc9d538405d1a6793d8"),
+ "role" : "student",
+ "status" : "archived",
+ "lastUpdatedFromVSA" : ISODate("2023-03-14T13:30:00.876-0500"),
+ "course" : {
+ "title" : "Algebra I v17 - Level 1",
+ "cid" : "3939",
+ "vsa_course_id" : NumberInt(3939),
+ "vsa_classroom_id" : NumberInt(480260),
+ "course_idfk" : ObjectId("5ec591f722bf7cc24b4a3360")
+ },
+ "instructor" : {
+ "instructor_foreign_id" : NumberInt(3786236),
+ "username" : "m_slippert",
+ "instructor_idfk" : ObjectId("5e30b10f83cfd55260b93ae8"),
+ "lname" : "Lippert",
+ "mname" : "James",
+ "fname" : "Steve"
+ },
+ "owner" : {
+ "owner_idfk" : ObjectId("6410bdc8d538405d1a6793d6"),
+ "owner_foreign_id" : NumberInt(79453897),
+ "username" : "cathy33",
+ "lname" : "McDermott",
+ "fname" : "Cathy",
+ "mname" : "Maude"
+ }
+ "exemptedLessons": [
+   {"linked-mj_pre_algebra_1658322794138.json":1},
+   {"linked-mj_pre_algebra_1658322776090.json":1},
+   {"linked-mj_pre_algebra_1658322790758.json":1},
+   {"linked-mj_pre_algebra_1658322777423.json":1},
+   {"linked-mj_pre_algebra_1658322793410.json":1},
+   {"linked-mj_pre_algebra_1658322779196.json":1},
+   {"mj_pre_algebra_1658167535542.json":1}
+  ]
+}
