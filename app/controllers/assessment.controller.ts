@@ -1932,7 +1932,6 @@ export class AssessmentService extends BaseService {
                     }
                     else {
                         if (((!domain.match(/^(fatdec|tolland)/)) && (domain.match(/flvs\.net/)) || (domain.match(/dev\.educator\.flvs\.net$/)) || (domain.match(/testlearn\.educator\.flvs\.net$/))) && (cid > 0)) {
-                            require("/subroutines/flvsexport/integrationAPI.pl");
                             recordEvent({
                                 path: pathToAssessment,
                                 event: "ASSESSMENT_RESET"

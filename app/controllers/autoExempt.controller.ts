@@ -55,7 +55,7 @@ export class AutoExemptionService {
 
     getBasicAssessmentName(path: string) {
         const lines = fs.readFileSync(path);
-        const fields = lines[0].split(/\*/);
+        const fields = lines[0].split('*');
         return fields[0];
     }
 
@@ -166,10 +166,10 @@ export class AutoExemptionService {
     }
 
     handleExemptions(entry: any, pathToFile: string, assessmentsExemted: string[]) {
-        const [, netapp, netappDir, , instructor, cid, , learner, assessment] = pathToFile.split(/\//);
+        const [, netapp, netappDir, , instructor, cid, , learner, assessment] = pathToFile.split('/');
         const pathToCourse = `/${netapp}/${netappDir}/educator/instructor/${cid}`;
 
-         entry.assessments_to_ex.forEach((item) => {
+        entry.assessments_to_ex.forEach((item) => {
             const thePath = `/${netapp}/${netappDir}/educator/instructor/${cid}/${item.path}/${item.index}.txt`;
             const nameOfAssessmentInCourse = this.getBasicAssessmentName(thePath); // get definition
 
@@ -228,7 +228,7 @@ export class AutoExemptionService {
             'arobinson143_2489'
         ];
 
-        const [, netapp, netappDir, dummy, instructor, cid, dummy2, learner, assessment] = pathToFile.split('/\//');
+        const [, netapp, netappDir, dummy, instructor, cid, dummy2, learner, assessment] = pathToFile.split('/');
         if (!activeCourses.includes[instructor + '_' + cid])
             return;
 
@@ -341,7 +341,7 @@ export class AutoExemptionService {
                                                     // // Set file permissions to 660
                                                     // fs.chmodSync(pathToStoSkippedLessons, 0o660);
                                                     this.importData(exemptedPagesStruc, 'lessons');
-                                                    
+
 
                                                 } catch (err) {
                                                     console.error('Error:', err);
@@ -360,43 +360,119 @@ export class AutoExemptionService {
                                 // left off here!
                                 let examResults;
                                 if (assessmentType === "exam") {
-                                    examResults = getScore();
-                                    const correctGroups = this.getCorrectGroups(examResults, examTemplate);
+                                    fs.readFile(pathToFile, function (err, data) {
+                                        if (err) throw err;
 
-                                    const exemptionEntries: any = Object.entries(
-                                        exemptionData[JSONSubmittedIndex]['exemption_data']
-                                    );
+                                        var rawAnsweredQuestions = data.toString().split('\n');
 
-                                    for (const [key, entry] of exemptionEntries) {
-                                        let shouldExempt = 1;
-                                        const exam_group_requirements: any = Object.entries(entry['exam_group_requirements']);
-                                        for (const [groupRequirement, requirementValue] of exam_group_requirements) {
-                                            const correctGroup = correctGroups[requirementValue];
-                                            const allCorrect = correctGroup['group']['all_correct'];
-                                            const isAllRequired = groupRequirement['required'] === 'all';
+                                        // pop off the date time stuff
+                                        rawAnsweredQuestions.shift();
 
-                                            if (isAllRequired && allCorrect !== 1) {
-                                                shouldExempt = 0;
-                                            } else if (allCorrect < requirementValue['required']) {
-                                                shouldExempt = 0;
-                                            }
-                                        }
+                                        examTemplate.shift();
 
-                                        if (shouldExempt) {
-                                            assessmentsExemted = this.handleExemptions(entry, pathToFile, exemptionData['JSONSubmittedIndex']['pretest_name'], assessmentsExemted);
+                                        var examResults;
 
-                                            storedPretestName = exemptionData[JSONSubmittedIndex]['pretest_name'];
+                                        //my @correctGroups = getCorrectGroups(submission => \@rawAnsweredQuestions, template => \@examTemplate);
 
-                                            entry['standards'].forEach((studentPageName) => {
-                                                studentPageNames.push(studentPageName);
+                                        (function () {
+                                            var quell, shellRoot, dir, username, student, courseid, type, key,
+                                                realscore, maxscore, manualscore, gradebuilderstuff, sizegradebuilderstuff,
+                                                gradebuildercontribution, contribution, extracredit, honors, assessmentstatus,
+                                                workiscompleted, myTerm, timesubmitted, requestgrade;
+
+                                            shellRoot = netapp;
+                                            dir = netappDir;
+                                            quell = instructor;
+                                            username = instructor;
+                                            student = learner;
+                                            courseid = cid;
+                                            type = 'exam';
+                                            key = submittedIndex;
+                                            realscore = 0;
+
+                                            //this calls the old getscore routine from the gradebook.pl lib
+
+                                            examResults = getscore();
+
+                                        }());
+
+                                        var correctGroups = this.getCorrectGroups({ result: examResults, template: examTemplate });
+
+                                        // now check for exemption triggers
+                                        Object.keys(exemptionData[JSONSubmittedIndex].exemption_data).forEach(function (key) {
+                                            var entry = exemptionData[JSONSubmittedIndex].exemption_data[key];
+
+                                            // check the group requirements
+                                            var shouldExempt = true;
+                                            entry.exam_group_requirements.forEach(function (groupRequirement) {
+                                                if (groupRequirement.required === 'all') {
+                                                    if (correctGroups[groupRequirement.group].all_correct !== 1) {
+                                                        shouldExempt = false;
+                                                    }
+                                                } else {
+                                                    if (correctGroups[groupRequirement.group].correct_count < groupRequirement.required) {
+                                                        shouldExempt = false;
+                                                    }
+                                                }
                                             });
-                                        }
-                                    }
+
+                                            //now actually do the exemption
+                                            if (shouldExempt) {
+                                                assessmentsExemted = handleExemptions({
+                                                    entry: entry, pathToFile: pathToFile,
+                                                    pretest_name: exemptionData[JSONSubmittedIndex].pretest_name,
+                                                    assessments_exempted: assessmentsExemted
+                                                });
+
+                                                storedPretestName = exemptionData[JSONSubmittedIndex].pretest_name;
+
+                                                entry.standards.forEach(function (studentPageName) {
+                                                    studentPageNames.push(studentPageName);
+                                                });
+                                            }
+
+                                        });
+                                    });
 
                                 } else if (assessmentType === "assignment") {
 
+                                    let assignmentresults;
                                     let shouldExempt = 0;
-                                    let assignmentresults = getscore();
+
+                                    // const correctGroups = getCorrectGroups(submission => rawAnsweredQuestions, template => examTemplate);
+
+                                    {
+                                        const questionanswerdata = require('./subroutines/questionanswerdata');
+
+                                        const quell = "";
+                                        let shellRoot;
+                                        let dir;
+                                        const username = "instructor";
+                                        const student = "learner";
+                                        const courseid = "cid";
+                                        const type = 'assignment';
+                                        const key = submittedIndex;
+                                        let realscore = 0;
+                                        const gradebuilderstuff = [];
+                                        let sizegradebuilderstuff;
+                                        let gradebuildercontribution;
+                                        let contribution;
+                                        let extracredit;
+                                        let honors;
+                                        let assessmentstatus;
+                                        let workiscompleted;
+                                        let myTerm;
+                                        let timesubmitted;
+                                        let requestgrade;
+
+                                        shellRoot = netapp;
+                                        dir = netappDir;
+
+                                        assignmentresults = getscore();
+
+                                        // console.warn(assignmentresults);
+                                    }
+
                                     // const @correctGroups = getCorrectGroups(submission.\@rawAnsweredQuestions, template.\examTemplate);
                                     const examData = exemptionData[JSONSubmittedIndex]['exemption_data'];
                                     const { manual_score, rubrics } = assignmentresults;
@@ -449,12 +525,18 @@ export class AutoExemptionService {
         }
 
         if (assessmentsExemted || studentPageNames.length > 0) {
-            const studentInfo = this.getStudentInfo(netapp, netappDir, instructor, cid, learner);
+            let studentInfo = this.getStudentInfo(netapp, netappDir, instructor, cid, learner);
+            let alltests = '';
 
-            const allExemptions = assessmentsExemted.sort().join('<br>');
-            const studentPages = studentPageNames.sort().join('<br>');
+            assessmentsExemted.sort().forEach((exempted) => {
+                alltests += exempted + '<br>';
+            });
 
-            const allTests = `${allExemptions}${studentPages}`;
+            if (studentPageNames.length > 0) {
+                studentPageNames.sort().forEach((studentPageName) => {
+                    alltests += studentPageName + '<br>';
+                });
+            }
 
 
             const domain = this.getDomain();
@@ -465,7 +547,7 @@ export class AutoExemptionService {
             <br>
             Your results show that you have already mastered the content on the following lesson page(s) and assessment:<br>
             <br>
-            ${allTests}
+            ${alltests}
             <br>
             <strong>What do my pretest results mean?</strong><br>
             <br>
