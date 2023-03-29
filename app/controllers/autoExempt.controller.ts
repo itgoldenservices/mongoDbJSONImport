@@ -291,26 +291,43 @@ export class AutoExemptionService extends BaseService {
         return correctGroups;
     }
 
-    handleExemptions(entry: any, pathToFile: string, pretest_name: string, data: Lessons) {
-        const assessmentsExemted: string[] = [];
-        const [, netapp, netappDir, , instructor, cid, , learner, assessment] = pathToFile.split("/");
-        const pathToCourse = `/${netapp}/${netappDir}/educator/instructor/${cid}`;
-        entry.assessments_to_ex.forEach((item: any) => {
-            const thePath = `/${netapp}/${netappDir}/educator/instructor/${cid}/${item.path}/${item.index}.txt`;
-            const nameOfAssessmentInCourse = this.getBasicAssessmentName(thePath || ""); // get definition
-            if (item.name === nameOfAssessmentInCourse) {
-                console.warn(`should exempt: ${item.name} ${pretest_name}`);
-                assessmentsExemted.push(item.name);
-                this.assessService.setAssessmentIsExempt(netapp, netappDir, instructor, cid, item.path, item.index, learner, 1, "Mastery of content and skills were demonstrated on pretestName", 1);
+    async handleExemptions(entry,pathToFile, pretest_name) {
+        const [, netapp, netappDir, , instructor, cid, , learner, assessment] = pathToFile.split('/');
+        const pretestName = pretest_name;
+        const pathToCourse = `/${netapp}/${netappDir}/educator/${instructor}/${cid}`;
+        const assessmentsExemted: any[] = []
+        let exemptedSuccessfully = 0;
+        for (const assessmentToEx of entry.assessments_to_ex) {
+            const thePath = `${pathToCourse}/${assessmentToEx.path}/${assessmentToEx.index}.txt`;
+            const nameOfAssessmentInCourse = this.getBasicAssessmentName(thePath);
+            
+            if (assessmentToEx.name === nameOfAssessmentInCourse) {
+                assessmentsExemted.push(assessmentToEx.name);
+                this.assessService.setAssessmentIsExempt(netapp, netappDir, instructor, cid, assessmentToEx.path, assessmentToEx.index, learner, 1, `Mastery of content and skills were demonstrated on ${pretestName}`, 1);
+                exemptedSuccessfully = 1;
             } else {
-                console.warn(`Assessment names do not match for list of assessments to ex: ${thePath} - ${item.name} - ${nameOfAssessmentInCourse}`);
+                console.warn(`Assessment names do not match for list of assessments to ex: ${thePath} - ${assessmentToEx.name} - ${nameOfAssessmentInCourse}`);
             }
-        });
-
-        // read in existing data
-        if (entry.assessments_to_ex.length == 0 && entry.lessons_to_skip) {
-            this.exemtingLessons(entry, data, "lessons");
         }
+        
+        if ((exemptedSuccessfully || entry.assessments_to_ex.length === 0) && entry.lessons_to_skip) {
+            let exemptedPagesStruc;
+            
+            const db = MongoDB.get().db("enrollments");
+            // Find the object in the collection
+            const query = { "course.cid": cid, "owner.username": learner, "instructor.username": instructor };
+            console.log(query);
+            const exemptedPagesStrucexemptedPagesStruc = await db.collection("lessons").findOne(query);
+
+            for (const lessonToSkip of entry.lessons_to_skip) {
+                exemptedPagesStruc.exempted_pages[lessonToSkip] = 1;
+            }
+            
+            if (exemptedPagesStruc) {
+               this.writeDataToDB(exemptedPagesStruc, 'update');
+            }
+        }
+        
         return assessmentsExemted;
     }
 
@@ -419,11 +436,9 @@ export class AutoExemptionService extends BaseService {
 
                                             if (entry["lessons_to_skip"]) {
                                                 try {
-                                                    const instructorObj = await this.createInstructor(instructor);
-                                                    const ownerObj = await this.createOwner(learner);
-                                                    const courseObj = await this.createCourseObj(title, cid);
-                                                    const data = this.createObjectToStore(courseObj, instructorObj, ownerObj, {});
-
+                                                    entry.lessons_to_skip.forEach(lessonToSkip => {
+                                                        exemptedPagesStruc.exempted_pages[lessonToSkip] = 0;
+                                                      });
                                                     this.exemtingLessons(entry, data, "lessons");
                                                 } catch (err) {
                                                     console.error("Error:", err);
