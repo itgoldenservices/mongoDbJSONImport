@@ -1725,7 +1725,7 @@ export class AssessmentService extends BaseService {
         return singularType as unknown as AssessmentTypes;
     }
 
-    getPathToAssessment(netapp, theDir, instructor, cid, typeIndex, assessmentIndex, student) {
+    getPathToAssessment(netapp: string, theDir: string, instructor: string, cid: string, typeIndex: string, assessmentIndex: string, student: string) {
         let pathToAssessment = `/${netapp}/${theDir}/educator/${instructor}/${cid}/students/${student}/`;
 
         if (typeIndex === "exams") {
@@ -1744,10 +1744,10 @@ export class AssessmentService extends BaseService {
     }
 
 
-    setExamInstructorComments(path, comment) {
+    setExamInstructorComments(path: string, comment: string) {
         const JSON_UTILITIES = new JsonUtilities();
 
-        let dataHash = {};
+        let dataHash: any = {};
 
         if (fs.existsSync(path)) {
             const rawJSONData = fs.readFileSync(path).toString();
@@ -1766,7 +1766,7 @@ export class AssessmentService extends BaseService {
         fs.chmodSync(path, '660');
     }
 
-    assessmentIsExempt(netapp, theDir, instructor, cid, typeIndex, assessmentIndex, student) {
+    assessmentIsExempt(netapp: string, theDir: string, instructor: string, cid: string, typeIndex: string, assessmentIndex: string, student: string) {
         let pathToAssessment = this.getPathToAssessment(netapp, theDir, instructor, cid, typeIndex, assessmentIndex, student);
 
         if (typeIndex === "exams") {
@@ -1811,7 +1811,7 @@ export class AssessmentService extends BaseService {
         return 0;
     }
 
-    assessmentIsManuallyGraded(netapp, theDir, instructor, cid, typeIndex, assessmentIndex, student) {
+    assessmentIsManuallyGraded(netapp: string, theDir: string, instructor: string, cid: string, typeIndex: string, assessmentIndex: string, student: string) {
         let pathToAssessment = this.getPathToAssessment(netapp, theDir, instructor, cid, typeIndex, assessmentIndex, student);
 
         if (typeIndex === "exams") {
@@ -1854,7 +1854,7 @@ export class AssessmentService extends BaseService {
         return false;
     }
 
-    assessmentHasBeenAccessed(netapp, theDir, instructor, cid, typeIndex, assessmentIndex, student) {
+    assessmentHasBeenAccessed(netapp: string, theDir: string, instructor: string, cid: string, typeIndex: string, assessmentIndex: string, student: string) {
         let pathToAssessment = this.getPathToAssessment(netapp, theDir, instructor, cid, typeIndex, assessmentIndex, student);
 
         if (fs.existsSync(pathToAssessment)) {
@@ -1865,7 +1865,7 @@ export class AssessmentService extends BaseService {
     }
 
 
-    async setAssessmentIsExempt(netapp, theDir, instructor, cid, typeIndex, assessmentIndex, student, shouldExempt, comment, ignoreIfSubmissionExists){
+    async setAssessmentIsExempt(netapp: string, theDir: string, instructor: string, cid: string, typeIndex: string, assessmentIndex: string, student: string, shouldExempt: number, comment: string, ignoreIfSubmissionExists: number){
 
         if (comment.length) {
             comment = comment.replace(/\+/g, ' ');
