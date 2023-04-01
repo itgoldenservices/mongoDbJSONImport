@@ -1,8 +1,7 @@
-//import { CommonParams, FileService, AutoExemptionService, } from '@educator-ng/common';
-import { CommonParams, FileService, AutoExemptionService, AssessmentService } from './services';
+ 
 const mockSetAssessmentIsExempt = jest.fn();
-const mockGetSubmission = jest.fn().mockResolvedValue( {"Q1": 7, "Q2": 5, "Q3": 0});
-const fs = require("fs");
+const mockGetSubmission = jest.fn().mockResolvedValue({ "Q1": 7, "Q2": 5, "Q3": 0 });
+
 jest.mock('./assessment.controller', () => {
   return {
     AssessmentService: jest.fn().mockImplementation(() => {
@@ -14,7 +13,47 @@ jest.mock('./assessment.controller', () => {
   }
 });
 
-const mockData = {
+const mockLessons = {
+  "_id": "6410bdc9d538405d1a6793d8",
+  "role": "student",
+  "status": "archived",
+  "lastUpdatedFromVSA": "2023-03-14T13:30:00.876-0500",
+  "course": {
+    "title": "Algebra I v17 - Level 1",
+    "cid": "3939",
+    "vsa_course_id": 3940,
+    "vsa_classroom_id": 480260,
+    "course_idfk": "5ec591f722bf7cc24b4a3360"
+  },
+  "instructor": {
+    "instructor_foreign_id": 3786236,
+    "username": "m_slippert",
+    "instructor_idfk": "5e30b10f83cfd55260b93ae8",
+    "lname": "Lippert",
+    "mname": "James",
+    "fname": "Steve"
+  },
+  "owner": {
+    "owner_idfk": "6410bdc8d538405d1a6793d6",
+    "owner_foreign_id": 79453897,
+    "username": "cathy33",
+    "lname": "McDermott",
+    "fname": "Cathy",
+    "mname": "Maude"
+  },
+  "exemptedLessons": [
+    { "linked-mj_pre_algebra_1658322794138.json": 1 },
+    { "linked-mj_pre_algebra_1658322776090.json": 1 },
+    { "linked-mj_pre_algebra_1658322790758.json": 1 },
+    { "linked-mj_pre_algebra_1658322777423.json": 1 },
+    { "linked-mj_pre_algebra_1658322793410.json": 1 },
+    { "linked-mj_pre_algebra_1658322779196.json": 1 },
+    { "mj_pre_algebra_1658167535542.json": 1 }
+  ]
+};
+
+
+const mockData: any = {
   "version": "2.0",
   "usage": {
     "active": 1,
@@ -23,10 +62,10 @@ const mockData = {
       "content": true
     },
     "instructor_exceptions": {
-        "jarnstein1": false
+      "jarnstein1": false
     }
   },
-  
+
   "exam_0001": {
     "exemption_data": {
       "2a12d202a844ed979d2b25895f34304fd3d5c6c3": {
@@ -40,7 +79,7 @@ const mockData = {
           "SS.912.W.2.1"
         ],
         "lessons_to_skip": [
-          "module01/01_01_01.htm "
+          "module01/01_01_01.htm"
         ],
         "assessments_to_ex": [
           {
@@ -70,7 +109,7 @@ const mockData = {
           "module01/01_02_01.htm "
         ],
         "assessments_to_ex": [
-           
+
         ]
       },
       "b33d3f39635580cf2d4c086af5adeac61a657ed2": {
@@ -223,7 +262,7 @@ const mockData = {
           "SS.912.W.2.1"
         ],
         "lessons_to_skip": [
-          "module01/01_01_01.htm "
+          "module01/01_01_01.htm"
         ],
         "assessments_to_ex": [
           {
@@ -250,10 +289,10 @@ const mockData = {
           "SS.912.W.3.2"
         ],
         "lessons_to_skip": [
-          "module01/01_02_01.htm "
+          "module01/01_02_01.htm"
         ],
         "assessments_to_ex": [
-           
+
         ]
       },
       "b33d3f39635580cf2d4c086af5adeac61a657ed2": {
@@ -1518,80 +1557,44 @@ const mockData = {
   }
 };
 
-jest.mock('fs');
 
-describe('Auto Exemption Service', () => {
-  let requestParams: CommonParams = {
-    shellroot: '',
-    dir: '',
-  };
-
-  beforeEach(() => {
-
-    requestParams = {
-      shellroot: 'e1',
-      dir: 'dev_test',
-      instructor: 'a_teacher',
-      courseid: '1234',
-      username: 'a_student',
-    };
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  })
-
-  describe('getExemptedLessons', () => {
-    it('should return an array of strings', async () => {
-      const exemptedPages: string = '{"exempted_pages":{"module01/01_01_01.htm":1,"module01/01_03_01.htm":1,"module01/01_06_01.htm":1,"module03/03_02_01.htm":1}}'
-      const expectedResult: string[] = [
-        'module01/01_01_01.htm',
-        'module01/01_03_01.htm',
-        'module01/01_06_01.htm',
-        'module03/03_02_01.htm',
-      ];
-      jest.spyOn(FileService, 'getFileContents').mockImplementation(async () => exemptedPages);
-      const result: string[] = await AutoExemptionService.getExemptedLessons(requestParams);
-
-      expect(typeof result).toBe('object');
-      expect(result).toEqual(expectedResult);
-    });
-
-    it('should return empty array for bad JSON', async () => {
-      const exemptedPages: string = '{"exempted_page"';
-      const expectedResult: string[] = [];
-
-      jest.spyOn(FileService, 'getFileContents').mockImplementation(async () => exemptedPages);
-      const result: string[] = await AutoExemptionService.getExemptedLessons(requestParams);
-
-      expect(typeof result).toBe('object');
-      expect(result).toEqual(expectedResult);
-    });
-
-    it('should empty array for existing but empty file', async () => {
-      const exemptedPages: string = '{}';
-      const expectedResult: string[] = [];
-
-      jest.spyOn(FileService, 'getFileContents').mockImplementation(async () => exemptedPages);
-      const result: string[] = await AutoExemptionService.getExemptedLessons(requestParams);
-
-      expect(typeof result).toBe('object');
-      expect(result).toEqual(expectedResult);
-    });
-
-    it('should empty array for non-existant file', async () => {
-      const expectedResult: string[] = [];
-      const result: string[] = await AutoExemptionService.getExemptedLessons(requestParams);
-
-      expect(typeof result).toBe('object');
-      expect(result).toEqual(expectedResult);
-    });
-
-
-  });
-});
-
+const mockUpdateDB = jest.fn().mockResolvedValue(true);
 describe('checkExam', () => {
+  beforeEach(() => {
+    
+    jest.spyOn(MongoDB, 'get').mockReturnValue({
+      db: (type: string) => {
+        return {
+          collection: (col: string) => {
+            return {
+              insertMany: (data: any) => {
+                return Promise.resolve(true);
+              },
+              updateOne: mockUpdateDB,
+              find: (data: any) => {
+                return Promise.resolve(mockData);
+              },
+              findOne: (data: any) => {
+                console.log(col);
+                if (col === "enrollments")
+                  return Promise.resolve(mockLessons);
+                else
+                  return Promise.resolve(mockData);
+              },
+            }
+          }
+        }
+      }
+    });
+    jest.spyOn(FileService, 'getFileContents').mockImplementation((file: string, _arg2?: boolean, _arg3?: boolean) => {
+      if (file.endsWith('exemptedlesssons_json.txt'))
+        return Promise.resolve({ exempted_pages: {} });
+      else if (file.endsWith('submittedIndex.txt'))
+        return Promise.resolve(["01.00 Module One Pretest*"]);
+      else
+        return Promise.resolve(["01.00 Module One Pretest*", "Q1*essay*group1*10", "Q2*mcq*group1*5", "Q3*mcq*group2*5"]);
+    });
+  })
   test('should return when file is not in active courses', async () => {
     const pathToFile = '/inactive/1234/educator/sampleuser/3333/exam.txt';
     const event = '';
@@ -1625,85 +1628,35 @@ describe('checkExam', () => {
     const event = 'ASSESSMENT_RESET';
     const result = await new AutoExemptionService().checkExam(pathToFile, event);
     expect(result).toBe(undefined);
-    // expect call to getStudentInfo
-    // expect call to getDomain
-    // expect email sent with correct content
   });
 
 
   test('should handle exemption if event is Assessment reset', async () => {
     const pathToFile = '/flvs840/content/educator/jarnstein1/3921/dummy2/m_slippert/exam0001.txt';
     const event = 'ASSESSMENT_RESET';
-    fs.existsSync.mockReturnValue(true);
-    fs.writeFileSync.mockReturnValue(true);
-    fs.readFileSync.mockImplementation((file: string) => {
-      if(file.endsWith('.json'))
-      return JSON.stringify(mockData)
-     
-      else if(file.endsWith('exemptedlesssons_json.txt'))
-      return {exempted_pages: {}}
-      else if(file.endsWith('.txt'))
-      return ["01.00 Module One Pretest*"];
-    });
     const result = await new AutoExemptionService().checkExam(pathToFile, event);
-     expect(mockSetAssessmentIsExempt).toHaveBeenCalled();
-     expect(fs.writeFileSync).toHaveBeenCalled();
+    expect(mockSetAssessmentIsExempt).toHaveBeenCalled();
+    expect(mockSetAssessmentIsExempt).toHaveBeenCalled();
+    expect(mockUpdateDB).toHaveBeenCalled();
+    const lessons = mockUpdateDB.mock.calls[0][1]['$set'].exemptedLessons;
+    const lesson = Object.keys(lessons[lessons.length - 1])[0];
+    expect(lessons[lessons.length - 1][lesson]).toBe(0);
   });
 
   test('should handle exemption if event is not Assessment reset for assessment type is exam', async () => {
     const pathToFile = '/flvs840/content/educator/jarnstein1/3921/dummy2/m_slippert/exam0001.txt';
     const event = 'ASSESSMENT_SET';
-    fs.existsSync.mockReturnValue(true);
-    fs.writeFileSync.mockReturnValue(true);
-    fs.readFileSync.mockImplementation((file: string) => {
-      if(file.endsWith('.json'))
-      return JSON.stringify(mockData)
-     
-      else if(file.endsWith('exemptedlesssons_json.txt'))
-      return {exempted_pages: {}};
-      else if(file.endsWith('.txt'))
-      return ["01.00 Module One Pretest*", "Q1*essay*group1*10", "Q2*mcq*group1*5", "Q3*mcq*group2*5"];
-    });
-    fs.readFile.mockImplementation((file: string, cb: Function) => {
-      console.log(file);
-      if(file.endsWith('.json'))
-      return JSON.stringify(mockData)
-     
-      else if(file.endsWith('submittedIndex.txt'))
-      return ["Q1*essay*group1*10", "Q2*mcq*group1*5", "Q3*mcq*group2*5"];
-      else if(file.endsWith('.txt')){
-        cb(null, {"Q1": 7, "Q2": 5, "Q3": 0});
-      }
-    });
     const result = await new AutoExemptionService().checkExam(pathToFile, event);
     expect(mockSetAssessmentIsExempt).toHaveBeenCalled();
+    expect(mockUpdateDB).toHaveBeenCalled();
+    const lessons = mockUpdateDB.mock.calls[0][1]['$set'].exemptedLessons;
+    const lesson = Object.keys(lessons[lessons.length - 1])[0];
+    expect(lessons[lessons.length - 1][lesson]).toBe(1);
   });
 
-  test.('should handle exemption if event is not Assessment reset for assessment type is assignment', async () => {
+  test('should handle exemption if event is not Assessment reset for assessment type is assignment', async () => {
     const pathToFile = '/flvs840/content/educator/jarnstein1/3921/dummy2/m_slippert/assignment0001.txt';
     const event = 'ASSESSMENT_SET';
-    fs.existsSync.mockReturnValue(true);
-    fs.writeFileSync.mockReturnValue(true);
-    fs.readFileSync.mockImplementation((file: string) => {
-      if(file.endsWith('.json'))
-      return JSON.stringify(mockData)
-     
-      else if(file.endsWith('exemptedlesssons_json.txt'))
-      return {exempted_pages: {}};
-      else if(file.endsWith('.txt'))
-      return ["01.00 Module One Pretest*", "Q1*essay*group1*10", "Q2*mcq*group1*5", "Q3*mcq*group2*5"];
-    });
-    fs.readFile.mockImplementation((file: string, cb: Function) => {
-      console.log(file);
-      if(file.endsWith('.json'))
-      return JSON.stringify(mockData)
-     
-      else if(file.endsWith('submittedIndex.txt'))
-      return ["Q1*essay*group1*10", "Q2*mcq*group1*5", "Q3*mcq*group2*5"];
-      else if(file.endsWith('.txt')){
-        cb(null, {"Q1": 7, "Q2": 5, "Q3": 0});
-      }
-    });
     mockGetSubmission.mockResolvedValue({
       manual_score: 10,
       rubrics: {
@@ -1717,5 +1670,11 @@ describe('checkExam', () => {
     });
     const result = await new AutoExemptionService().checkExam(pathToFile, event);
     expect(mockSetAssessmentIsExempt).toHaveBeenCalled();
+    expect(mockUpdateDB).toHaveBeenCalled();
+    const lessons = mockUpdateDB.mock.calls[0][1]['$set'].exemptedLessons;
+    const lesson = Object.keys(lessons[lessons.length - 1])[0];
+    expect(lessons[lessons.length - 1][lesson]).toBe(1);
   });
 });
+
+

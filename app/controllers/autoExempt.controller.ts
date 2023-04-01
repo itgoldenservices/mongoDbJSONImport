@@ -1,179 +1,61 @@
 import { AssignmentSubmission, CommonParams, ExamSubmission, WorksheetSubmission } from "../interfaces";
+
 import { FileService } from "./file.service";
-import { title } from "process";
+
 import { AssessmentService } from "./assessment.service";
 import { BaseService } from "./base.service";
 import { AssessmentTypes } from "../enums";
 import { SmtpService } from "./smtp.service";
-const fs = require("fs");
 import { MongoDB } from '@educator-ng/database';
 
-
 interface ExemptedPages {
-    exempted_pages?: any;
+    exemptedLessons: {
+        [key: string]: number;
+    };
 }
 
-interface Instructor {
-    instructor_foreign_id: number;
-    username: string;
-    instructor_idfk: number;
-    lname: string;
-    mname: string;
-    fname: string;
-}
-
-interface Owner {
-    owner_foreign_id: number;
-    username: string;
-    owner_idfk: number;
-    lname: string;
-    mname: string;
-    fname: string;
-}
-
-interface Course {
-    title: string;
-    cid: string;
-    vsa_course_id: number;
-    vsa_classroom_id: number;
-    course_idfk: string;
-}
-
-interface Lessons {
-    role: string;
-    status: string;
-    lastUpdatedFromVSA: string;
-    course: Course;
-    instructor: Instructor;
-    owner: Owner;
-    exemptedLessons: any;
-}
-
-export class AutoExemptionService extends BaseService {
+export class AutoExemptionService  {
     private assessService: AssessmentService;
     private smtpService: SmtpService;
     private client: any;
     constructor() {
-        super();
+        //super();
         this.assessService = new AssessmentService();
         this.smtpService = new SmtpService();
     }
 
-    async createInstructor(username: string) {
-        const query = { "instructor.username": username };
-        console.log(query);
-        const database = MongoDB.get().db("e1_general"); // what is the db name for instructor?
-        const config_collection = database.collection("instructor"); // what is the instructor collection name or do we have to create?
-        const result = await config_collection.findOne(query);
+    // static async getExemptedLessons(params: CommonParams): Promise<string[]> {
+    //     const exemptedLessons: string[] = [];
 
-        return {
-            ...result,
-            instructor_foreign_id: result._id,
-            instructor_idfk: result._id,
-        };
-    }
+    //     try {
+    //         const tempExemptedLessons = JSON.parse((await FileService.getFileContents(`${FileService.getStudentCoursePath(params)}/exemptedlesssons_json.txt`, false, false)) || "{}");
+    //         if (tempExemptedLessons && tempExemptedLessons.exempted_pages) {
+    //             for (const [lesson, _isExemptedInt] of Object.entries(tempExemptedLessons.exempted_pages)) {
+    //                 exemptedLessons.push(lesson);
+    //             }
+    //         }
+    //     } catch (err) {
+    //         console.error(err);
+    //     }
 
-    async createOwner(username: string) {
-        const query = { "owner.username": username };
-        console.log(query);
+    //     return exemptedLessons;
+    // }
 
-        const database = MongoDB.get().db("e1_general"); // what is the db name for learner/owner?
-        const config_collection = database.collection("owner"); // what is the learner/owner collection name or do we have to create?
-        const result = await config_collection.findOne(query);
-
-        return {
-            ...result,
-            owner_foreign_id: result._id,
-            owner_idfk: result._id,
-        };
-    }
-
-    async createCourseObj(title: string, cid: string) {
-        const query = { cid, title };
-        console.log(query);
-
-        const database = MongoDB.get().db("e1_general"); // what is the db name for course?
-        const config_collection = database.collection("course"); // what is the course collection name or do we have to create?
-        const result = await config_collection.findOne(query);
-        return {
-            ...result,
-            course_idfk: result._id,
-        };
-    }
-
-    createObjectToStore(course: Course, instructor: Instructor, owner: Owner, exemptedLessons: any): Lessons {
-        return {
-            role: "student",
-            status: "archived",
-            lastUpdatedFromVSA: new Date().toISOString(),
-            course,
-            instructor,
-            owner,
-            exemptedLessons: exemptedLessons,
-        };
-    }
-
-    static async getExemptedLessons(params: CommonParams): Promise<string[]> {
-        const exemptedLessons: string[] = [];
-
+    async writeDataToDB(data: any) {
         try {
-            const tempExemptedLessons = JSON.parse((await FileService.getFileContents(`${FileService.getStudentCoursePath(params)}/exemptedlesssons_json.txt`, false, false)) || "{}");
-            if (tempExemptedLessons && tempExemptedLessons.exempted_pages) {
-                for (const [lesson, _isExemptedInt] of Object.entries(tempExemptedLessons.exempted_pages)) {
-                    exemptedLessons.push(lesson);
+            const database = MongoDB.get().db("e1_flvs");
+
+            const config_collection = database.collection("enrollments");
+            const res = await config_collection.updateOne(
+                { _id: data._id },
+                {
+                    $set: data,
                 }
-            }
-        } catch (err) {
-            console.error(err);
-        }
+            );
 
-        return exemptedLessons;
-    }
-
-    async writeDataToDB(data: any, type: string, client: any, oper: string) {
-        try {
-            const database = client.db(type === "definitions" ? "e1_general" : "e1_flvs.enrollments");
-
-            const config_collection = database.collection(type === "definitions" ? "definitions" : "lessons");
-            if (oper === "write") {
-                const res = await config_collection.insertOne(data);
-            } else {
-                const res = await config_collection.updateOne(
-                    { _id: data._id },
-                    {
-                        $set: data,
-                    }
-                );
-            }
-
-            process.exit(0);
+             
         } finally {
             // client.close();
-        }
-    }
-
-    async exemtingLessons(entry: any, data: any, type: string) {
-        // Connection URL
-
-        try {
-            const db = MongoDB.get().db("enrollments");
-            // Find the object in the collection
-            const query = { "course.cid": data.course.cid, "owner.username": data.owner.username, "instructor.username": data.instructor.username };
-            console.log(query);
-            const result = await db.collection("lessons").findOne(query);
-            if (!result) {
-                console.log("Unable to find the object");
-                this.writeDataToDB(data, "lessons", this.client, "write");
-                // return callback(err, null);
-            }
-
-            console.log("Object found:", result);
-            result.exemptedLessons = data.exemptedLessons;
-            this.writeDataToDB(result, "lessons", this.client, "update");
-
-            //return callback(null, result);
-        } finally {
-            // Ensures that the client will close when you finish/error
         }
     }
 
@@ -181,22 +63,29 @@ export class AutoExemptionService extends BaseService {
         return process.env.HTTP_HOST;
     }
 
-    getBasicAssessmentName(path: string) {
-        const lines = fs.readFileSync(path);
+    async getBasicAssessmentName(path: string) {
+        const lines = await FileService.getFileContents(path);
         const fields = lines[0].split("*");
 
         return fields[0];
     }
 
-    getStudentInfo(netapp: string, dir: string, instructor: string, cid: string, learner: string) {
-        const STUPROFILE = fs.readFileSync(`/${netapp}/${dir}/educator/${instructor}/${cid}/students/${learner}/profile.txt`);
+    async getStudentInfo(shellroot: string, dir: string, instructor: string, courseid: string, username: string) {
+
+        const STUPROFILE = await FileService.getEnrollmentProfilePath({
+            shellroot,
+            dir,
+            courseid,
+            instructor,
+            username
+        });
 
         const returnValue = { fname: "", email: "" };
 
         const fields = STUPROFILE[0].split("*");
 
         returnValue.fname = fields[1];
-        returnValue.email = learner + "@" + this.getDomain();
+        returnValue.email = username + "@" + this.getDomain();
 
         return returnValue;
     }
@@ -291,54 +180,56 @@ export class AutoExemptionService extends BaseService {
         return correctGroups;
     }
 
-    async handleExemptions(entry,pathToFile, pretest_name) {
-        const [, netapp, netappDir, , instructor, cid, , learner, assessment] = pathToFile.split('/');
+    async handleExemptions(entry: any, pathToFile: string, pretest_name: string) {
+        const [, netapp, netappDir, , instructor, cid, , learner, assessment] = pathToFile.split("/");
         const pretestName = pretest_name;
         const pathToCourse = `/${netapp}/${netappDir}/educator/${instructor}/${cid}`;
-        const assessmentsExemted: any[] = []
+        const assessmentsExemted: any[] = [];
         let exemptedSuccessfully = 0;
         for (const assessmentToEx of entry.assessments_to_ex) {
             const thePath = `${pathToCourse}/${assessmentToEx.path}/${assessmentToEx.index}.txt`;
-            const nameOfAssessmentInCourse = this.getBasicAssessmentName(thePath);
-            
+            const nameOfAssessmentInCourse = await this.getBasicAssessmentName(thePath);
             if (assessmentToEx.name === nameOfAssessmentInCourse) {
                 assessmentsExemted.push(assessmentToEx.name);
-                this.assessService.setAssessmentIsExempt(netapp, netappDir, instructor, cid, assessmentToEx.path, assessmentToEx.index, learner, 1, `Mastery of content and skills were demonstrated on ${pretestName}`, 1);
+                this.assessService.setAssessmentIsExempt(
+                    netapp,
+                    netappDir,
+                    instructor,
+                    cid,
+                    assessmentToEx.path,
+                    assessmentToEx.index,
+                    learner,
+                    1,
+                    `Mastery of content and skills were demonstrated on ${pretestName}`,
+                    1
+                );
                 exemptedSuccessfully = 1;
             } else {
                 console.warn(`Assessment names do not match for list of assessments to ex: ${thePath} - ${assessmentToEx.name} - ${nameOfAssessmentInCourse}`);
             }
         }
-        
+
         if ((exemptedSuccessfully || entry.assessments_to_ex.length === 0) && entry.lessons_to_skip) {
-            let exemptedPagesStruc;
-            
-            const db = MongoDB.get().db("enrollments");
+            const db = MongoDB.get().db("e1_flvs1");
             // Find the object in the collection
             const query = { "course.cid": cid, "owner.username": learner, "instructor.username": instructor };
-            console.log(query);
-            const exemptedPagesStrucexemptedPagesStruc = await db.collection("lessons").findOne(query);
-
-            for (const lessonToSkip of entry.lessons_to_skip) {
-                exemptedPagesStruc.exempted_pages[lessonToSkip] = 1;
-            }
-            
+            const exemptedPagesStruc: any = await db.collection("enrollments").findOne(query);
             if (exemptedPagesStruc) {
-               this.writeDataToDB(exemptedPagesStruc, 'update');
+                for (const lessonToSkip of entry.lessons_to_skip) {
+                    exemptedPagesStruc.exemptedLessons.push({[lessonToSkip]: 1});
+                }
+                this.writeDataToDB(exemptedPagesStruc);
             }
         }
-        
         return assessmentsExemted;
     }
 
     async getExemptionData(cid: string, instructor: string, learner: string) {
         const query = { "instructor.username": instructor, "course.cid": cid, "owner.username": learner };
-        console.log(query);
         const database = MongoDB.get().db("e1_general"); // what is the db name for instructor?
-        const config_collection = database.collection("enrollments"); // what is the instructor collection name or do we have to create?
+        const config_collection = database.collection("definitions"); // what is the instructor collection name or do we have to create?
         const result = await config_collection.findOne(query);
-
-        return result
+        return result;
     }
 
     async checkExam(pathToFile: string, event: string) {
@@ -361,7 +252,7 @@ export class AutoExemptionService extends BaseService {
 
             if (pathToExemptionFile) {
                 try {
-                    const exemptionData = await this.getExemptionData(cid, instructor, learner);
+                    const exemptionData: any = await this.getExemptionData(cid, instructor, learner);
                     // first check to see if submitted exam is pretest in structure
                     // strip out the extra data and get to the index
                     if (!this.autoExemptionsTurnedOn(exemptionData.usage, netappDir, instructor)) {
@@ -386,28 +277,27 @@ export class AutoExemptionService extends BaseService {
                     let examTemplate: any = [];
 
                     const JSONSubmittedIndex = `${assessmentType}_${submittedIndex}`;
-                    console.log(JSONSubmittedIndex);
                     if (exemptionData[JSONSubmittedIndex]) {
                         console.warn("assessment in pretest list:", pathToFile, assessmentType);
 
                         // now read in the assessment design...
-                        if (assessmentType === "exam") {
+                        if (assessmentType === AssessmentTypes.Exam) {
                             pathToExamTemplate = `${pathToCourse}/exams/submittedIndex.txt`;
-                            examTemplate = fs.readFileSync(pathToExamTemplate);
-                        } else if (assessmentType === "assignment") {
+                            examTemplate = await FileService.getFileContents(pathToExamTemplate);
+                        } else if (assessmentType === AssessmentTypes.Assignment) {
                             pathToExamTemplate = `${pathToCourse}/assignments/submittedIndex.txt`;
-                            examTemplate = fs.readFileSync(pathToExamTemplate);
+                            examTemplate = await FileService.getFileContents(pathToExamTemplate);
                         } else {
                             console.warn("Invalid assessment type sent to checkExam: assessmentType");
                             return;
                         }
-                        console.log(this.getBasicAssessmentName(pathToExamTemplate), exemptionData[JSONSubmittedIndex]["pretest_name"]);
-                        if (this.getBasicAssessmentName(pathToExamTemplate) === exemptionData[JSONSubmittedIndex]["pretest_name"])
+                        const assessmentName = await this.getBasicAssessmentName(pathToExamTemplate);
+                        if (assessmentName === exemptionData[JSONSubmittedIndex]["pretest_name"])
                             if (event === "ASSESSMENT_RESET") {
                                 for (const key in exemptionData[JSONSubmittedIndex].exemption_data) {
                                     const entry = exemptionData[JSONSubmittedIndex].exemption_data[key];
                                     const pathToAssessment = pathToExamTemplate;
-                                    const $assessmentName = this.getBasicAssessmentName(pathToAssessment);
+                                    const $assessmentName = await this.getBasicAssessmentName(pathToAssessment);
                                     // make sure the pretest (or assignment) name stored in the auto exempt json matches
                                     // what is expected for that particular assessment index in the course shell.
                                     // if not we don't want to change anything as the assessments are misaligned
@@ -422,7 +312,7 @@ export class AutoExemptionService extends BaseService {
                                             entry.assessments_to_ex.forEach(async (exAssessmentEntry: any) => {
                                                 // Get name of assessments to be un-exempted upfront
                                                 const thePath = "/" + netapp + "/" + netappDir + "/educator/instructor/" + cid + "/" + exAssessmentEntry["path"] + "/" + exAssessmentEntry["index"] + ".txt";
-                                                const nameOfAssessmentInCourse = this.getBasicAssessmentName(thePath);
+                                                const nameOfAssessmentInCourse = await this.getBasicAssessmentName(thePath);
 
                                                 // Check names of assessments to be un-exempted
                                                 if (exAssessmentEntry["name"] === nameOfAssessmentInCourse) {
@@ -432,14 +322,18 @@ export class AutoExemptionService extends BaseService {
                                                     console.warn("Assessment names do not match for list of assessments to un-ex:", exAssessmentEntry.name, "-", nameOfAssessmentInCourse);
                                                 }
                                             });
-
-
+                                            const db = MongoDB.get().db("e1_flvs1");
+                                            const query = { "course.cid": cid, "owner.username": learner, "instructor.username": instructor };
+                                            const exemptedPageStructure: any = await db.collection("enrollments").findOne(query);
+                                           
                                             if (entry["lessons_to_skip"]) {
                                                 try {
-                                                    entry.lessons_to_skip.forEach(lessonToSkip => {
-                                                        exemptedPagesStruc.exempted_pages[lessonToSkip] = 0;
-                                                      });
-                                                    this.exemtingLessons(entry, data, "lessons");
+                                                    if (exemptedPageStructure) {
+                                                        entry["lessons_to_skip"].forEach((lessonstoSkip: string) => {
+                                                            exemptedPageStructure.exemptedLessons.push({[lessonstoSkip]: 0});
+                                                        });
+                                                        this.writeDataToDB(exemptedPageStructure);
+                                                    }
                                                 } catch (err) {
                                                     console.error("Error:", err);
                                                 }
@@ -454,7 +348,7 @@ export class AutoExemptionService extends BaseService {
                                 // in all the question answers
                                 // left off here!
 
-                                if (assessmentType === "exam") {
+                                if (assessmentType === AssessmentTypes.Exam) {
                                     const data = await this.getExemptionData(cid, instructor, learner);
                                     var rawAnsweredQuestions = data.toString().split("\n");
 
@@ -538,18 +432,14 @@ export class AutoExemptionService extends BaseService {
 
                                         //now actually do the exemption
                                         if (shouldExempt) {
-                                            const instructorObj = await this.createInstructor(instructor);
-                                            const ownerObj = await this.createOwner(learner);
-                                            const courseObj = await this.createCourseObj(title, cid);
-                                            const data = this.createObjectToStore(courseObj, instructorObj, ownerObj, {});
-                                            assessmentsExemted.push(...this.handleExemptions(entry, pathToFile, exemptionData[JSONSubmittedIndex].pretest_name, data));
+                                            assessmentsExemted.push(await this.handleExemptions(entry, pathToFile, exemptionData[JSONSubmittedIndex].pretest_name));
                                             storedPretestName = exemptionData[JSONSubmittedIndex].pretest_name;
                                             entry.standards.forEach((studentPageName: string) => {
                                                 studentPageNames.push(studentPageName);
                                             });
                                         }
                                     });
-                                } else if (assessmentType === "assignment") {
+                                } else if (assessmentType === AssessmentTypes.Assignment) {
                                     let assignmentresults;
                                     let shouldExempt = 0;
 
@@ -612,14 +502,10 @@ export class AutoExemptionService extends BaseService {
                                         }
 
                                         if (shouldExempt) {
-                                            const instructorObj = await this.createInstructor(instructor);
-                                            const ownerObj = await this.createOwner(learner);
-                                            const courseObj = await this.createCourseObj(title, cid);
-                                            const data = this.createObjectToStore(courseObj, instructorObj, ownerObj, {});
-                                            const assessmentsToBeExemted = this.handleExemptions(entry, pathToFile, exemptionData[JSONSubmittedIndex].pretest_name, data);
+                                            const assessmentsToBeExemted = await this.handleExemptions(entry, pathToFile, exemptionData[JSONSubmittedIndex].pretest_name);
 
                                             if (assessmentsToBeExemted.length > 0) assessmentsExemted.push(...assessmentsToBeExemted);
-                                            storedPretestName = exemptionData.JSONSubmittedIndex.pretest_name;
+                                            storedPretestName = exemptionData[JSONSubmittedIndex].pretest_name;
                                             const studentPageNamesTemp = [...entry.standards];
                                             studentPageNames.push(...studentPageNamesTemp);
                                             //assessService.setAssessmentIsExempt(netapp, netappDir, instructor, cid, assessment.path, assessment.index, learner, 1, "Auto Exempted based on work done in exemptionData.submittedIndex}.pretest_name}", 1);
@@ -633,7 +519,9 @@ export class AutoExemptionService extends BaseService {
                                 }
                             }
                     } else {
-                        console.warn("pretest name does not match file template $pathToExamTemplate - " + this.getBasicAssessmentName(pathToExamTemplate) + " - " + exemptionData.JSONSubmittedIndex.pretest_name);
+                        const assessmentName = await this.getBasicAssessmentName(pathToExamTemplate);
+
+                        console.warn("pretest name does not match file template $pathToExamTemplate - " + assessmentName + " - " + exemptionData.JSONSubmittedIndex.pretest_name);
                     }
                 } catch (err) {
                     console.warn("assessment not in pretest list: $submittedIndex");
@@ -645,7 +533,7 @@ export class AutoExemptionService extends BaseService {
             return;
         }
         if (assessmentsExemted || studentPageNames.length > 0) {
-            let studentInfo = this.getStudentInfo(netapp, netappDir, instructor, cid, learner);
+            let studentInfo = await this.getStudentInfo(netapp, netappDir, instructor, cid, learner);
             let alltests = "";
 
             assessmentsExemted.sort().forEach((exempted: string) => {
