@@ -1,20 +1,23 @@
-import { AssignmentSubmission, CommonParams, ExamSubmission, WorksheetSubmission } from "../interfaces";
+//import { AssignmentSubmission, CommonParams, ExamSubmission, WorksheetSubmission } from "../interfaces";
+import { AssignmentSubmission, CommonParams, ExamSubmission, WorksheetSubmission } from "./interfaces";
 
-import { FileService } from "./file.service";
+//import { FileService } from "./file.service";
+import { FileService, BaseService, MongoDB, SmtpService, AssessmentTypes } from "./services";
 
-import { AssessmentService } from "./assessment.service";
-import { BaseService } from "./base.service";
-import { AssessmentTypes } from "../enums";
-import { SmtpService } from "./smtp.service";
-import { MongoDB } from '@educator-ng/database';
+import { AssessmentService } from "./assessment.controller";
 
+//import { AssessmentService } from "./assessment.service";
+//import { BaseService } from "./base.service";
+//import { AssessmentTypes } from "../enums";
+//import { SmtpService } from "./smtp.service";
+//import { MongoDB } from "./services";
 interface ExemptedPages {
     exemptedLessons: {
         [key: string]: number;
     };
 }
 
-export class AutoExemptionService  {
+export class AutoExemptionService {
     private assessService: AssessmentService;
     private smtpService: SmtpService;
     private client: any;
@@ -42,6 +45,7 @@ export class AutoExemptionService  {
     // }
 
     async writeDataToDB(data: any) {
+        console.log(data);
         try {
             const database = MongoDB.get().db("e1_flvs");
 
@@ -53,7 +57,7 @@ export class AutoExemptionService  {
                 }
             );
 
-             
+
         } finally {
             // client.close();
         }
@@ -214,10 +218,26 @@ export class AutoExemptionService  {
             // Find the object in the collection
             const query = { "course.cid": cid, "owner.username": learner, "instructor.username": instructor };
             const exemptedPagesStruc: any = await db.collection("enrollments").findOne(query);
+            const lessonsToBeExemptedNotPresent: string[] = []
             if (exemptedPagesStruc) {
-                for (const lessonToSkip of entry.lessons_to_skip) {
-                    exemptedPagesStruc.exemptedLessons.push({[lessonToSkip]: 1});
-                }
+                entry.lessons_to_skip.forEach((lessonsToSkipInEntry: string) => {
+                    exemptedPagesStruc.exemptedLessons.forEach((lessonsToSkip: any) => {
+                        console.log(lessonsToSkip)
+                        const keys: string[] = Object.keys(lessonsToSkip);
+                        if (keys[0] === lessonsToSkipInEntry) {
+                            console.log(lessonsToSkip[keys[0]])
+                            lessonsToSkip[keys[0]] == 1
+                        }
+                        else {
+                            if (lessonsToBeExemptedNotPresent.indexOf(lessonsToSkipInEntry) < 0) {
+                                lessonsToBeExemptedNotPresent.push(lessonsToSkipInEntry);
+                            }
+                        }
+                    })
+                });
+                lessonsToBeExemptedNotPresent.forEach((lesson: string) => {
+                    exemptedPagesStruc.exemptedLessons.push({ [lesson]: 1 });
+                })
                 this.writeDataToDB(exemptedPagesStruc);
             }
         }
@@ -325,13 +345,29 @@ export class AutoExemptionService  {
                                             const db = MongoDB.get().db("e1_flvs1");
                                             const query = { "course.cid": cid, "owner.username": learner, "instructor.username": instructor };
                                             const exemptedPageStructure: any = await db.collection("enrollments").findOne(query);
-                                           
+
                                             if (entry["lessons_to_skip"]) {
                                                 try {
                                                     if (exemptedPageStructure) {
-                                                        entry["lessons_to_skip"].forEach((lessonstoSkip: string) => {
-                                                            exemptedPageStructure.exemptedLessons.push({[lessonstoSkip]: 0});
+                                                        let lessonsToBeExemptedNotPresent: string[] = []
+                                                        entry.lessons_to_skip.forEach((lessonsToSkipInEntry: string) => {
+                                                            exemptedPageStructure.exemptedLessons.forEach((lessonsToSkip: any) => {
+                                                                console.log(lessonsToSkip)
+                                                                const keys: string[] = Object.keys(lessonsToSkip);
+                                                                if (keys[0] === lessonsToSkipInEntry) {
+                                                                    console.log(lessonsToSkip[keys[0]])
+                                                                    lessonsToSkip[keys[0]] == 0
+                                                                }
+                                                                else {
+                                                                    if (lessonsToBeExemptedNotPresent.indexOf(lessonsToSkipInEntry) < 0) {
+                                                                        lessonsToBeExemptedNotPresent.push(lessonsToSkipInEntry);
+                                                                    }
+                                                                }
+                                                            })
                                                         });
+                                                        lessonsToBeExemptedNotPresent.forEach((lesson: string) => {
+                                                            exemptedPageStructure.exemptedLessons.push({ [lesson]: 0 });
+                                                        })
                                                         this.writeDataToDB(exemptedPageStructure);
                                                     }
                                                 } catch (err) {

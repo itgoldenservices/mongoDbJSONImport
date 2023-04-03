@@ -1,4 +1,78 @@
- 
+//import { CommonParams, FileService, AutoExemptionService, } from '@educator-ng/common';
+import { mock } from 'node:test';
+import Lessons from './Lessons';
+import { CommonParams, FileService, AutoExemptionService, MongoDB } from './services';
+// describe('Auto Exemption Service', () => {
+//   let requestParams: CommonParams = {
+//     shellroot: '',
+//     dir: '',
+//   };
+
+//   beforeEach(() => {
+
+//     requestParams = {
+//       shellroot: 'e1',
+//       dir: 'dev_test',
+//       instructor: 'a_teacher',
+//       courseid: '1234',
+//       username: 'a_student',
+//     };
+//   });
+
+//   afterEach(() => {
+//     jest.clearAllMocks();
+//   })
+
+//   describe.skip('getExemptedLessons', () => {
+//     it('should return an array of strings', async () => {
+//       const exemptedPages: string = '{"exempted_pages":{"module01/01_01_01.htm":1,"module01/01_03_01.htm":1,"module01/01_06_01.htm":1,"module03/03_02_01.htm":1}}'
+//       const expectedResult: string[] = [
+//         'module01/01_01_01.htm',
+//         'module01/01_03_01.htm',
+//         'module01/01_06_01.htm',
+//         'module03/03_02_01.htm',
+//       ];
+//       jest.spyOn(FileService, 'getFileContents').mockImplementation(async () => exemptedPages);
+//       const result: string[] = await AutoExemptionService.getExemptedLessons(requestParams);
+
+//       expect(typeof result).toBe('object');
+//       expect(result).toEqual(expectedResult);
+//     });
+
+//     it('should return empty array for bad JSON', async () => {
+//       const exemptedPages: string = '{"exempted_page"';
+//       const expectedResult: string[] = [];
+
+//       jest.spyOn(FileService, 'getFileContents').mockImplementation(async () => exemptedPages);
+//       const result: string[] = await AutoExemptionService.getExemptedLessons(requestParams);
+
+//       expect(typeof result).toBe('object');
+//       expect(result).toEqual(expectedResult);
+//     });
+
+//     it('should empty array for existing but empty file', async () => {
+//       const exemptedPages: string = '{}';
+//       const expectedResult: string[] = [];
+
+//       jest.spyOn(FileService, 'getFileContents').mockImplementation(async () => exemptedPages);
+//       const result: string[] = await AutoExemptionService.getExemptedLessons(requestParams);
+
+//       expect(typeof result).toBe('object');
+//       expect(result).toEqual(expectedResult);
+//     });
+
+//     it('should empty array for non-existant file', async () => {
+//       const expectedResult: string[] = [];
+//       const result: string[] = await AutoExemptionService.getExemptedLessons(requestParams);
+
+//       expect(typeof result).toBe('object');
+//       expect(result).toEqual(expectedResult);
+//     });
+
+
+//   });
+// });
+
 const mockSetAssessmentIsExempt = jest.fn();
 const mockGetSubmission = jest.fn().mockResolvedValue({ "Q1": 7, "Q2": 5, "Q3": 0 });
 
@@ -42,8 +116,8 @@ const mockLessons = {
     "mname": "Maude"
   },
   "exemptedLessons": [
-    { "linked-mj_pre_algebra_1658322794138.json": 1 },
-    { "linked-mj_pre_algebra_1658322776090.json": 1 },
+    { "module01/01_01_01.htm": 1 },
+    { "module01/01_05_01.htm": 1 },
     { "linked-mj_pre_algebra_1658322790758.json": 1 },
     { "linked-mj_pre_algebra_1658322777423.json": 1 },
     { "linked-mj_pre_algebra_1658322793410.json": 1 },
@@ -106,7 +180,7 @@ const mockData: any = {
           "SS.912.W.3.2"
         ],
         "lessons_to_skip": [
-          "module01/01_02_01.htm "
+          "module01/01_02_01.htm"
         ],
         "assessments_to_ex": [
 
