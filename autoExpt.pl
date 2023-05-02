@@ -5,6 +5,10 @@ use MIME::QuotedPrint;
 
 require "/subroutines/gradebookUtils.pl";
 
+ my $client = MongoDB->connect();
+my $db = $client->get_database('mydatabase');
+my $collection = $db->get_collection('auto_exemption_rules');
+
 sub getDomain {
     return $ENV{'HTTP_HOST'};
 }
@@ -240,42 +244,37 @@ sub handleExemptions {
     if ( ($exemptedSuccessfully || scalar @{ $entry->{assessments_to_ex} } == 0 ) && ($entry->{lessons_to_skip})) {
         my $exemptedPagesStruc;
 
-        my $pathToStoSkippedLessons = "$pathToCourse/students/$learner/exemptedlesssons_json.txt";
+        # First, query the enrollment document from your collection
+        my $enrollment = $collection->find_one({'cid' => $courseId, 'instructor.username' => $instructor, 'owner.username' => $owner});
 
-        if (-e $pathToStoSkippedLessons) {
-            open my $fh, '<' . $pathToStoSkippedLessons;
-            my $rawJSONData = do { local $/; <$fh> };
-            close $fh;
-            my $myJSON = new JSON;
-            eval { $exemptedPagesStruc = $myJSON->utf8->decode($rawJSONData); };
+        # Check if the enrollment exists in the collection
+        if ($enrollment) {
+            # Get the exempted lessons json string from the enrollment document
+            my $jsonString = $enrollment->{exemptedLessons};
+            my $exemptedPagesStruc;
 
+            # Decode the JSON string and handle any errors using eval
+            eval { $exemptedPagesStruc = $myJSON->utf8->decode($jsonString); };
             if ($@) {
-                warn("cannot read json file:  $pathToStoSkippedLessons");
-
+                warn("cannot decode JSON string for enrollment: $courseId, $instructor, $owner");
                 # return;
-
             }
 
+            # Copy ignored lessons into existing structure
+            foreach my $lessonToSkip (@{ $entry->{lessons_to_skip} }) {
+                $exemptedPagesStruc->{exemptedLessons}->{$lessonToSkip} = 1;
+            }
+
+            # Write out updated lessons to exempt to the enrollment document
+            if ($exemptedPagesStruc) {
+                my $myJSON = new JSON;
+                $myJSON = $myJSON->indent(['true']);
+                my $utf8_encoded_json_text = $myJSON->encode($exemptedPagesStruc);
+
+                $enrollment->{exemptedLessons} = $utf8_encoded_json_text;
+                $collection->replace_one({'_id' => $enrollment->{_id}}, $enrollment);
+            }
         }
-
-        #copy ignored lessons into existing struc
-
-        foreach my $lessonToSkip (@{ $entry->{lessons_to_skip} }) {
-            $exemptedPagesStruc->{exempted_pages}->{$lessonToSkip} = 1;
-        }
-
-        # write out lessons to exempt
-        if ($exemptedPagesStruc) {
-            my $myJSON = new JSON;
-            $myJSON = $myJSON->indent(['true']);
-            my $utf8_encoded_json_text = $myJSON->encode($exemptedPagesStruc);
-
-            open(MYFILE, '>' . "$pathToStoSkippedLessons");
-            print MYFILE $utf8_encoded_json_text;
-            close MYFILE;
-            chmod(0660, $pathToStoSkippedLessons);
-        }
-
     }
     
     return $assessmentsExemted;
@@ -297,35 +296,28 @@ sub checkExam {
         'arobinson143_2489' => 1,    # <-- remove this before rollout
     );
 
-    my ($dummy, $netapp, $netappDir, $dummy, $instructor, $cid, $dummy2, $learner, $assessment) = split(/\//, $pathToFile);
+   
+my ($dummy, $netapp, $netappDir, $dummy, $instructor, $cid, $dummy2, $learner, $assessment) = split(/\//, $pathToFile);
 
-    #return if ($activeCourses{ $instructor . '_' . $cid } != 1);
+#return if ($activeCourses{ $instructor . '_' . $cid } != 1);
 
-    if (($assessment =~ /^exam/) || ($assessment =~ /^assignment/)) {
+if (($assessment =~ /^exam/) || ($assessment =~ /^assignment/)) {
 
-        my $pathToCourse        = "/$netapp/$netappDir/educator/$instructor/$cid";
-        my $pathToExemptionFile = "$pathToCourse/autoexemption.json";
+    my $exemption_data = $collection->find_one({ "courseId" => $cid });
 
-        if (($netapp eq 'flvs840') || ($netapp eq 'f840')) {
-            $pathToExemptionFile = "/flvs840/content/educator/master$cid/master$cid/autoexemption.json";
-        }
+    if (!$exemption_data) {
+        warn("cannot find auto exemption rules for course: $cid");
+        return;
+    }
 
-        if (-e $pathToExemptionFile) {
+    my $myJSON = new JSON;
+    my $exemptionData;
+    eval { $exemptionData = $myJSON->utf8->decode($exemption_data); };
 
-            open my $fh, '<' . $pathToExemptionFile;
-            my $rawJSONData = do { local $/; <$fh> };
-            close $fh;
-
-            my $myJSON = new JSON;
-            my $exemptionData;
-            eval { $exemptionData = $myJSON->utf8->decode($rawJSONData); };
-
-            if ($@) {
-                warn("cannot read json file:  $pathToExemptionFile");
-                return;
-
-                # error reading JSON
-            } else {
+    if ($@) {
+        warn("cannot decode json data for course: $cid");
+        return;
+    } else {
 
                 # first check to see if submitted exam is pretest in structure
                 # strip out the extra data and get to the index
@@ -427,41 +419,42 @@ sub checkExam {
                                         if ($entry->{lessons_to_skip}) {
                                             my $exemptedPagesStruc;
 
-                                            my $pathToStoSkippedLessons = "$pathToCourse/students/$learner/exemptedlesssons_json.txt";
+                                            # First, query the enrollment document from your collection
+                                            my $enrollment = $collection->find_one({'cid' => $courseId, 'instructor.username' => $instructor, 'owner.username' => $owner});
 
-                                            if (-e $pathToStoSkippedLessons) {
-                                                open my $fh, '<' . $pathToStoSkippedLessons;
-                                   
-                                                my $rawJSONData = do { local $/; <$fh> };
-                                                close $fh;
-                                                eval { $exemptedPagesStruc = $myJSON->utf8->decode($rawJSONData); };
+                                            # Check if the enrollment exists in the collection
+                                            if ($enrollment) {
+                                                # Get the exempted lessons json string from the enrollment document
+                                                my $jsonString = $enrollment->{exemptedLessons};
+                                                my $exemptedPagesStruc;
 
+                                                # Decode the JSON string and handle any errors using eval
+                                                eval { $exemptedPagesStruc = $myJSON->utf8->decode($jsonString); };
                                                 if ($@) {
-                                                    warn("cannot read json file:  $pathToStoSkippedLessons");
-
+                                                    warn("cannot decode JSON string for enrollment: $courseId, $instructor, $owner");
                                                     # return;
-
                                                 }
 
+                                                # Copy ignored lessons into existing structure
+                                                foreach my $lessonToSkip (@{ $entry->{lessons_to_skip} }) {
+                                                    $exemptedPagesStruc->{exemptedLessons}->{$lessonToSkip} = 0;
+                                                }
+
+                                                # Write out updated lessons to exempt to the enrollment document
+                                                if ($exemptedPagesStruc) {
+                                                    my $myJSON = new JSON;
+                                                    $myJSON = $myJSON->indent(['true']);
+                                                    my $utf8_encoded_json_text = $myJSON->encode($exemptedPagesStruc);
+
+                                                    $enrollment->{exemptedLessons} = $utf8_encoded_json_text;
+                                                    $collection->replace_one({'_id' => $enrollment->{_id}}, $enrollment);
+                                                }
+                                            }
+                                            else {
+                                                warn("enrollment not found in the collection: $courseId, $instructor, $owner");
+                                                # return;
                                             }
 
-                                            #copy ignored lessons into existing struc
-
-                                            foreach my $lessonToSkip (@{ $entry->{lessons_to_skip} }) {
-                                                $exemptedPagesStruc->{exempted_pages}->{$lessonToSkip} = 0;
-                                            }
-
-                                            # write out lessons to exempt
-                                            if ($exemptedPagesStruc) {
-                                                my $myJSON = new JSON;
-                                                $myJSON = $myJSON->indent(['true']);
-                                                my $utf8_encoded_json_text = $myJSON->encode($exemptedPagesStruc);
-
-                                                open(MYFILE, '>' . "$pathToStoSkippedLessons");
-                                                print MYFILE $utf8_encoded_json_text;
-                                                close MYFILE;
-                                                chmod(0660, $pathToStoSkippedLessons);
-                                            }
 
                                         }
                                     }
@@ -648,8 +641,7 @@ sub checkExam {
 
             }
 
-        } 
-        else {
+        } else {
 
             # there is no json file - - no need to check further
             return;
@@ -722,5 +714,3 @@ $emailText = encode_qp($emailText);
         close(MAIL);
     }
 }
-
-1;
