@@ -5,9 +5,6 @@ use MIME::QuotedPrint;
 
 require "/subroutines/gradebookUtils.pl";
 
- my $client = MongoDB->connect();
-my $db = $client->get_database('mydatabase');
-my $collection = $db->get_collection('auto_exemption_rules');
 
 sub getDomain {
     return $ENV{'HTTP_HOST'};
@@ -221,6 +218,10 @@ sub handleExemptions {
     my $exemptedSuccessfully = 0;
 
     my $entry = $data->{entry};
+    my $client   = MongoDB->connect($ENV('MDB_ADDRESS'));
+    my $database = $client->get_database($netapp . '_' . $netappDir;);
+    my $enrollmentCollection = $database->get_collection('enrollments');
+
 
     foreach my $assessment (@{ $entry->{assessments_to_ex} }) {
 
@@ -245,7 +246,7 @@ sub handleExemptions {
         my $exemptedPagesStruc;
 
         # First, query the enrollment document from your collection
-        my $enrollment = $collection->find_one({'cid' => $courseId, 'instructor.username' => $instructor, 'owner.username' => $owner});
+        my $enrollment = $enrollmentCollection->find_one({'cid' => $courseId, 'instructor.username' => $instructor, 'owner.username' => $owner});
 
         # Check if the enrollment exists in the collection
         if ($enrollment) {
@@ -272,7 +273,7 @@ sub handleExemptions {
                 my $utf8_encoded_json_text = $myJSON->encode($exemptedPagesStruc);
 
                 $enrollment->{exemptedLessons} = $utf8_encoded_json_text;
-                $collection->replace_one({'_id' => $enrollment->{_id}}, $enrollment);
+                $enrollmentCollection->replace_one({'_id' => $enrollment->{_id}}, $enrollment);
             }
         }
     }
@@ -298,12 +299,16 @@ sub checkExam {
 
    
 my ($dummy, $netapp, $netappDir, $dummy, $instructor, $cid, $dummy2, $learner, $assessment) = split(/\//, $pathToFile);
+my $client   = MongoDB->connect($ENV('MDB_ADDRESS'));
+my $database = $client->get_database($netapp . '_' . $netappDir;);
+my $autoExemptionCollection = $database->get_collection('auto_exemption_rules');
+my $enrollmentCollection = $database->get_collection('enrollments');
 
 #return if ($activeCourses{ $instructor . '_' . $cid } != 1);
 
 if (($assessment =~ /^exam/) || ($assessment =~ /^assignment/)) {
 
-    my $exemption_data = $collection->find_one({ "courseId" => $cid });
+    my $exemption_data = $autoExemptionCollection->find_one({ "courseId" => $cid });
 
     if (!$exemption_data) {
         warn("cannot find auto exemption rules for course: $cid");
@@ -420,7 +425,7 @@ if (($assessment =~ /^exam/) || ($assessment =~ /^assignment/)) {
                                             my $exemptedPagesStruc;
 
                                             # First, query the enrollment document from your collection
-                                            my $enrollment = $collection->find_one({'cid' => $courseId, 'instructor.username' => $instructor, 'owner.username' => $owner});
+                                            my $enrollment = $enrollmentCollection->find_one({'cid' => $courseId, 'instructor.username' => $instructor, 'owner.username' => $owner});
 
                                             # Check if the enrollment exists in the collection
                                             if ($enrollment) {
@@ -447,7 +452,7 @@ if (($assessment =~ /^exam/) || ($assessment =~ /^assignment/)) {
                                                     my $utf8_encoded_json_text = $myJSON->encode($exemptedPagesStruc);
 
                                                     $enrollment->{exemptedLessons} = $utf8_encoded_json_text;
-                                                    $collection->replace_one({'_id' => $enrollment->{_id}}, $enrollment);
+                                                    $enrollmentCollection->replace_one({'_id' => $enrollment->{_id}}, $enrollment);
                                                 }
                                             }
                                             else {

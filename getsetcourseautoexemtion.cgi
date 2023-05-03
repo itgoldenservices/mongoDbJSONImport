@@ -28,9 +28,9 @@ $sendData       = $query->param_fetch('data')->[0];
 $action         = $query->param_fetch('action')->[0];
 $JSON           = new JSON;
 
-my $client   = MongoDB->connect('mongodb://localhost:27017');
-my $database = $client->get_database('mydb');
-my $collection    = $database->get_collection('auto_exemption_rules');
+my $client   = MongoDB->connect($ENV('MDB_ADDRESS'));
+my $database = $client->get_database($netapp . '_' . $franchise;);
+my $collection = $database->get_collection('auto_exemption_rules');
 
 if ( ($franchise eq 'flvs') || ($franchise eq 'content') || ($franchise eq 'dev') ){
     my $domain = $ENV{'HTTP_HOST'};
