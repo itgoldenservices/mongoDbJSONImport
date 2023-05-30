@@ -1,7 +1,9 @@
-use strict;
+se strict;
 use JSON;
 use Data::Dumper;
 use MIME::QuotedPrint;
+use Packages::E1::E1MongoCacheProxy;
+use Packages::E1::E1MongoCacheProxy::EnrollmentCacheProxy;
 
 require "/subroutines/gradebookUtils.pl";
 
@@ -218,10 +220,6 @@ sub handleExemptions {
     my $exemptedSuccessfully = 0;
 
     my $entry = $data->{entry};
-    my $client   = MongoDB->connect($ENV('MDB_ADDRESS'));
-    my $database = $client->get_database($netapp . '_' . $netappDir;);
-    my $enrollmentCollection = $database->get_collection('enrollments');
-
 
     foreach my $assessment (@{ $entry->{assessments_to_ex} }) {
 
@@ -246,24 +244,24 @@ sub handleExemptions {
         my $exemptedPagesStruc;
 
         # First, query the enrollment document from your collection
-        my $enrollment = $enrollmentCollection->find_one({'cid' => $courseId, 'instructor.username' => $instructor, 'owner.username' => $owner});
+        my $enrollment =  Packages::E1::E1MongoCacheProxy::EnrollmentCacheProxy::find_enrollment( instructor => $instructor, cid => $cid, student => $learner );
 
         # Check if the enrollment exists in the collection
         if ($enrollment) {
             # Get the exempted lessons json string from the enrollment document
             my $jsonString = $enrollment->{exemptedLessons};
             my $exemptedPagesStruc;
-
+            my $myJSON = new JSON;
             # Decode the JSON string and handle any errors using eval
             eval { $exemptedPagesStruc = $myJSON->utf8->decode($jsonString); };
             if ($@) {
-                warn("cannot decode JSON string for enrollment: $courseId, $instructor, $owner");
+                warn("cannot decode JSON string for enrollment: $cid, $instructor, $learner");
                 # return;
             }
 
             # Copy ignored lessons into existing structure
             foreach my $lessonToSkip (@{ $entry->{lessons_to_skip} }) {
-                $exemptedPagesStruc->{exemptedLessons}->{$lessonToSkip} = 1;
+                $exemptedPagesStruc->{$lessonToSkip} = 1;
             }
 
             # Write out updated lessons to exempt to the enrollment document
@@ -272,8 +270,8 @@ sub handleExemptions {
                 $myJSON = $myJSON->indent(['true']);
                 my $utf8_encoded_json_text = $myJSON->encode($exemptedPagesStruc);
 
-                $enrollment->{exemptedLessons} = $utf8_encoded_json_text;
-                $enrollmentCollection->replace_one({'_id' => $enrollment->{_id}}, $enrollment);
+                Packages::E1::E1MongoCacheProxy::EnrollmentCacheProxy::add_exempted_lessons( instructor => $instructor, cid => $cid, student => $learner, exemptedLessons=> $utf8_encoded_json_text );
+                                                   
             }
         }
     }
@@ -297,32 +295,29 @@ sub checkExam {
         'arobinson143_2489' => 1,    # <-- remove this before rollout
     );
 
-   
-my ($dummy, $netapp, $netappDir, $dummy, $instructor, $cid, $dummy2, $learner, $assessment) = split(/\//, $pathToFile);
-my $client   = MongoDB->connect($ENV('MDB_ADDRESS'));
-my $database = $client->get_database($netapp . '_' . $netappDir;);
-my $autoExemptionCollection = $database->get_collection('auto_exemption_rules');
-my $enrollmentCollection = $database->get_collection('enrollments');
+    my ($dummy, $netapp, $netappDir, $dummy, $instructor, $cid, $dummy2, $learner, $assessment) = split(/\//, $pathToFile);
+    my $rules_proxy = Packages::E1::E1MongoCacheProxy->new( netapp => $ENV{GENERAL_MDB_PREFIX}, dir => 'general', collection => 'auto_exemption_rules' );
 
-#return if ($activeCourses{ $instructor . '_' . $cid } != 1);
+    #return if ($activeCourses{ $instructor . '_' . $cid } != 1);
+    
+    if (($assessment =~ /^exam/) || ($assessment =~ /^assignment/)) {
 
-if (($assessment =~ /^exam/) || ($assessment =~ /^assignment/)) {
+        my $pathToCourse        = "/$netapp/$netappDir/educator/$instructor/$cid";
+        my $exemption_data = $rules_proxy->queue_read_query_json( condition => {courseId => $cid }, method => 'find_one', projection => {'_id' => 0, 'courseId' => 0, 'updatedOn' => 0,} );
 
-    my $exemption_data = $autoExemptionCollection->find_one({ "courseId" => $cid });
+        if ($exemption_data) {
 
-    if (!$exemption_data) {
-        warn("cannot find auto exemption rules for course: $cid");
-        return;
-    }
+            my $myJSON = new JSON;
+            my $exemptionData;
+            eval { $exemptionData = $myJSON->utf8->decode($exemption_data); };
 
-    my $myJSON = new JSON;
-    my $exemptionData;
-    eval { $exemptionData = $myJSON->utf8->decode($exemption_data); };
 
-    if ($@) {
-        warn("cannot decode json data for course: $cid");
-        return;
-    } else {
+            if ($@) {
+                warn("cannot read auto exemption json:  $cid");
+                return;
+
+                # error reading JSON
+            } else {
 
                 # first check to see if submitted exam is pretest in structure
                 # strip out the extra data and get to the index
@@ -424,42 +419,38 @@ if (($assessment =~ /^exam/) || ($assessment =~ /^assignment/)) {
                                         if ($entry->{lessons_to_skip}) {
                                             my $exemptedPagesStruc;
 
-                                            # First, query the enrollment document from your collection
-                                            my $enrollment = $enrollmentCollection->find_one({'cid' => $courseId, 'instructor.username' => $instructor, 'owner.username' => $owner});
+                                             # First, query the enrollment document from your collection
+                                            my $enrollment =  Packages::E1::E1MongoCacheProxy::EnrollmentCacheProxy::find_enrollment( instructor => $instructor, cid => $cid, student => $learner );
 
-                                            # Check if the enrollment exists in the collection
                                             if ($enrollment) {
-                                                # Get the exempted lessons json string from the enrollment document
                                                 my $jsonString = $enrollment->{exemptedLessons};
-                                                my $exemptedPagesStruc;
 
                                                 # Decode the JSON string and handle any errors using eval
                                                 eval { $exemptedPagesStruc = $myJSON->utf8->decode($jsonString); };
                                                 if ($@) {
-                                                    warn("cannot decode JSON string for enrollment: $courseId, $instructor, $owner");
+                                                    warn("cannot read json file:  $pathToStoSkippedLessons");
+
                                                     # return;
+
                                                 }
 
-                                                # Copy ignored lessons into existing structure
-                                                foreach my $lessonToSkip (@{ $entry->{lessons_to_skip} }) {
-                                                    $exemptedPagesStruc->{exemptedLessons}->{$lessonToSkip} = 0;
-                                                }
-
-                                                # Write out updated lessons to exempt to the enrollment document
-                                                if ($exemptedPagesStruc) {
-                                                    my $myJSON = new JSON;
-                                                    $myJSON = $myJSON->indent(['true']);
-                                                    my $utf8_encoded_json_text = $myJSON->encode($exemptedPagesStruc);
-
-                                                    $enrollment->{exemptedLessons} = $utf8_encoded_json_text;
-                                                    $enrollmentCollection->replace_one({'_id' => $enrollment->{_id}}, $enrollment);
-                                                }
-                                            }
-                                            else {
-                                                warn("enrollment not found in the collection: $courseId, $instructor, $owner");
-                                                # return;
                                             }
 
+                                            #copy ignored lessons into existing struc
+
+                                            foreach my $lessonToSkip (@{ $entry->{lessons_to_skip} }) {
+                                                $exemptedPagesStruc->{$lessonToSkip} = 0;
+                                            }
+
+                                            # write out lessons to exempt
+                                            if ($exemptedPagesStruc) {
+                                                my $myJSON = new JSON;
+                                                $myJSON = $myJSON->indent(['true']);
+                                                my $utf8_encoded_json_text = $myJSON->encode($exemptedPagesStruc);
+
+                                                Packages::E1::E1MongoCacheProxy::EnrollmentCacheProxy::add_exempted_lessons( instructor => $instructor, cid => $cid, student => $learner, exemptedLessons=> $utf8_encoded_json_text );
+                                                    
+                                            }
 
                                         }
                                     }
