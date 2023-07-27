@@ -3,10 +3,16 @@ import { MdbSelector, MdbHistoryInterface } from "@educator-ng/common";
 import { MongoDB, MemcachedService } from "@educator-ng/database";
 import { BaseService, MdbBaseInterface } from "./base.service";
 
+export enum ExemptionCondition {
+    Honors = "Honors",
+    NonHonors = "Non Honors",
+    OneMore = "One more",
+  }
+
 interface ExemptionRule {
     ruleName: string;
     reasonForExemption: string;
-    exemptionCondition: string;
+    exemptionCondition: ExemptionCondition;
     assessments: string[];
 }
 export interface CourseSegmentInterface {
