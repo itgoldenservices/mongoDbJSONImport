@@ -1,0 +1,492 @@
+<edu-loader #loader *ngIf="isLoading"></edu-loader>
+<ng-container *ngIf="!isLoading">
+    <div>
+        <div *ngIf="errorMessage" class="alert alert-danger" role="alert">
+            {{ errorMessage }}
+        </div>
+        <form [formGroup]="courseSettingsForm" #ngForm="ngForm" (ngSubmit)="onSubmit()" autocomplete="off">
+            <div class="mb-4">
+
+                <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs" [animation]="false">
+                    <li ngbNavItem="courseInformation">
+                        <a ngbNavLink><i class="fa fa-book"></i> {{'courseSettings.courseInformation' | educatorLocale |
+                            async}}</a>
+                        <ng-template ngbNavContent formGroupName="courseInformation">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="inputCourseId">{{'common.courseId' | educatorLocale | async}}</label>
+                                    <input formControlName="courseId" type="text" class="form-control"
+                                        [class.is-invalid]="isSubmitted && courseSettingsForm.get('courseInformation.courseId').errors"
+                                        id="inputCourseId" placeholder="{{'common.courseId' | educatorLocale | async}}"
+                                        aria-describedby="invalidCourseId notAllowedToChangeCourseId">
+                                    <div aria-describedby="invalidCourseId" class="invalid-feedback"
+                                        *ngIf="isSubmitted && courseSettingsForm.get('courseInformation.courseId').errors">
+                                        {{'common.courseId' | educatorLocale | async}} {{'courseSettings.is' |
+                                        educatorLocale | async}} {{
+                                        courseSettingsForm.get('courseInformation.courseId').errors?.required ?
+                                        'required' : 'invalid' }}.
+                                    </div>
+                                    <small aria-describedby="notAllowedToChangeCourseId" class="form-text text-danger">
+                                        {{'courseSettings.cantChangeCourseId' | educatorLocale | async}}
+                                    </small>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="inputCourseName">{{'common.courseName' | educatorLocale |
+                                        async}}</label>
+                                    <input formControlName="courseName" type="text" class="form-control"
+                                        [class.is-invalid]="isSubmitted && courseSettingsForm.get('courseInformation.courseName').errors"
+                                        id="inputCourseName"
+                                        placeholder="{{'common.courseName' | educatorLocale | async}}"
+                                        aria-describedby="invalidCourseName">
+                                    <div id="invalidCourseName" class="invalid-feedback"
+                                        *ngIf="isSubmitted && courseSettingsForm.get('courseInformation.courseName').errors">
+                                        {{'common.courseName' | educatorLocale | async}} {{'courseSettings.is' |
+                                        educatorLocale | async}} {{
+                                        courseSettingsForm.get('courseInformation.courseName').errors?.required ?
+                                        'required' : 'invalid' }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="inputCreditHours">{{'common.creditHours' | educatorLocale |
+                                        async}}</label>
+                                    <select formControlName="creditHours" id="inputCreditHours" class="custom-select">
+                                        <option value="">{{'common.creditHours' | educatorLocale | async}}</option>
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                        <option value="11">11</option>
+                                        <option value="N/A">N/A</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="inputCourseTimeZone">{{'common.courseTimeZone' | educatorLocale |
+                                        async}}</label>
+                                    <select formControlName="courseTimeZone" id="inputCourseTimeZone"
+                                        class="custom-select">
+                                        <option value="">{{'common.courseTimeZone' | educatorLocale | async}}</option>
+                                        <option value="-6">{{'common.timeZoneMidway' | educatorLocale | async}}</option>
+                                        <option value="-5">{{'common.timeZoneHst' | educatorLocale | async}}</option>
+                                        <option value="-4">{{'common.timeZoneAkst' | educatorLocale | async}}</option>
+                                        <option value="-3">{{'common.timeZonePst' | educatorLocale | async}}</option>
+                                        <option value="-2.5">{{'common.timeZoneArizona' | educatorLocale | async}}
+                                        </option>
+                                        <option value="-2">{{'common.timeZoneMst' | educatorLocale | async}}</option>
+                                        <option value="-1">{{'common.timeZoneCst' | educatorLocale | async}}</option>
+                                        <option value="0">{{'common.timeZoneEst' | educatorLocale | async}}</option>
+                                        <option value="1">{{'common.timeZoneAst' | educatorLocale | async}}</option>
+                                        <option value="2">{{'common.timeZoneBrazil' | educatorLocale | async}}</option>
+                                        <option value="3">{{'common.timeZoneMidAtlantic' | educatorLocale | async}}
+                                        </option>
+                                        <option value="4">{{'common.timeZoneAz' | educatorLocale | async}}</option>
+                                        <option value="5">{{'common.timeZoneGmt' | educatorLocale | async}}</option>
+                                        <option value="6">{{'common.timeZoneCet' | educatorLocale | async}}</option>
+                                        <option value="7">{{'common.timeZoneEet' | educatorLocale | async}}</option>
+                                        <option value="8">{{'common.timeZoneMsk' | educatorLocale | async}}</option>
+                                        <option value="9">{{'common.timeZoneRsz3' | educatorLocale | async}}</option>
+                                        <option value="10">{{'common.timeZoneRsz4' | educatorLocale | async}}</option>
+                                        <option value="11">{{'common.timeZoneRsz5' | educatorLocale | async}}</option>
+                                        <option value="12">{{'common.timeZoneRsz6' | educatorLocale | async}}</option>
+                                        <option value="13">{{'common.timeZoneRsz7' | educatorLocale | async}}</option>
+                                        <option value="14">{{'common.timeZoneRsz8' | educatorLocale | async}}</option>
+                                        <option value="15">{{'common.timeZoneRsz9' | educatorLocale | async}}</option>
+                                        <option value="16">{{'common.timeZoneRsz10' | educatorLocale | async}}</option>
+                                        <option value="17">{{'common.timeZoneRsz11' | educatorLocale | async}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="col-md-12">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <label for="inputPrerequisite">{{'courseSettings.prerequisites' |
+                                                educatorLocale | async}}</label>
+                                        </div>
+                                        <button (click)="addPrerequisite()" type="button"
+                                            class="btn btn-primary btn-sm">
+                                            + {{'courseSettings.addPrerequisite' | educatorLocale | async}}
+                                        </button>
+                                    </div>
+                                    <div formArrayName="prerequisites">
+                                        <div *ngFor="let prerequisite of prerequisites.controls; let i=index">
+                                            <div class="mt-2 prerequisite">
+                                                <input [formControlName]="i" type="text" class="form-control"
+                                                    id="prerequisite{{ i }}"
+                                                    placeholder="{{'courseSettings.prerequisiteCourse' | educatorLocale | async}}"
+                                                    [class.is-invalid]="isSubmitted && courseSettingsForm.get('courseInformation.prerequisites').controls[i].errors"
+                                                    aria-describedby="invalidPrerequisite{{ i }}">
+                                                <div id="invalidPrerequisite{{ i }}" class="invalid-feedback"
+                                                    *ngIf="isSubmitted && courseSettingsForm.get('courseInformation.prerequisites').controls[i].errors">
+                                                    {{'courseSettings.prerequisite' | educatorLocale | async}}
+                                                    {{'courseSettings.is' | educatorLocale | async}} {{'common.invalid'
+                                                    | educatorLocale | async}}
+                                                </div>
+                                                <button class="btn btn-transparent remove-input-button" type="button"
+                                                    (click)="removePrerequisite(i)">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </li>
+                    <li ngbNavItem="studentEnrollment" *ngIf="studentEnrollment">
+                        <a ngbNavLink><i class="fa fa-clipboard-list"></i> {{'courseSettings.studentEnrollment' |
+                            educatorLocale | async}}</a>
+                        <ng-template ngbNavContent formGroupName="studentEnrollment">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="inputEnrollmentType">{{'courseSettings.enrollmentType' | educatorLocale
+                                        | async}}</label>
+                                    <select formControlName="enrollmentType" id="inputEnrollmentType"
+                                        class="custom-select" aria-describedby="enrollmentTypeHelp">
+                                        <option disabled value="">{{'courseSettings.enrollmentType' | educatorLocale |
+                                            async}}</option>
+                                        <option value="Open">{{'courseSettings.open' | educatorLocale | async}}</option>
+                                        <option value="Controlled">{{'courseSettings.controlled' | educatorLocale |
+                                            async}}</option>
+                                    </select>
+                                    <small id="enrollmentTypeHelp" class="form-text text-muted">
+                                        <strong>{{'courseSettings.open' | educatorLocale | async}}:</strong>
+                                        {{'courseSettings.openEnrollmentHelpText' | educatorLocale |
+                                        async}}<br /><strong>{{'courseSettings.controlled' | educatorLocale |
+                                            async}}:</strong> {{'courseSettings.controlledEnrollmentHelpText' |
+                                        educatorLocale | async}}
+                                    </small>
+                                </div>
+                                <div class="form-group col-md-6" *ngIf="registrationDoor">
+                                    <label for="inputRegistrationDoor">{{'courseSettings.registrationDoor' |
+                                        educatorLocale | async}}</label>
+                                    <select formControlName="registrationDoor" id="inputRegistrationDoor"
+                                        class="custom-select" aria-describedby="registrationDoorHelp">
+                                        <option value="">{{'courseSettings.registrationDoor' | educatorLocale | async}}
+                                        </option>
+                                        <option value="Open">{{'courseSettings.open' | educatorLocale | async}}</option>
+                                        <option value="Closed">{{'courseSettings.closed' | educatorLocale | async}}
+                                        </option>
+                                    </select>
+                                    <small id="registrationDoorHelp" class="form-text text-muted">
+                                        {{'courseSettings.registrationDoorHelpText' | educatorLocale | async}}
+                                        <strong>{{'courseSettings.studentCourseRegistrationPage' | educatorLocale |
+                                            async}}</strong> {{'courseSettings.orThe' | educatorLocale | async}}
+                                        <strong>{{'courseSettings.courseCatalogOutput' | educatorLocale |
+                                            async}}</strong>.
+                                    </small>
+                                </div>
+                                <div class="form-group col-md-6" *ngIf="courseTimeLimit">
+                                    <label for="inputCourseTimeLimit">{{'common.courseLength' | educatorLocale |
+                                        async}}</label>
+                                    <input type="number" min="1" formControlName="courseTimeLimit" class="form-control"
+                                        [class.is-invalid]="isSubmitted && courseSettingsForm.get('studentEnrollment.courseTimeLimit').errors"
+                                        id="inputCourseTimeLimit"
+                                        placeholder="{{'common.courseLength' | educatorLocale | async}}"
+                                        aria-describedby="invalidCourseTimeLimit courseTimeLimitHelp">
+                                    <div id="invalidCourseTimeLimit" class="invalid-feedback"
+                                        *ngIf="isSubmitted && courseSettingsForm.get('studentEnrollment.courseTimeLimit').errors">
+                                        {{'courseSettings.courseLengthMinHelperText' | educatorLocale | async}}
+                                    </div>
+                                    <small id="courseTimeLimitHelp" class="form-text text-muted">
+                                        {{'courseSettings.courseLengthHelperText' | educatorLocale | async}}
+                                    </small>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="inputStudentAccess">{{'common.studentAccess' | educatorLocale |
+                                        async}}</label>
+                                    <select formControlName="studentAccess" id="inputStudentAccess"
+                                        class="custom-select" aria-describedby="studentAccessHelp">
+                                        <option disabled value="">{{'common.studentAccess' | educatorLocale | async}}
+                                        </option>
+                                        <option value="On">{{'common.on' | educatorLocale | async}}</option>
+                                        <option value="Off">{{'common.off' | educatorLocale | async}}</option>
+                                    </select>
+                                    <small id="studentAccessHelp" class="form-text text-muted">
+                                        {{'courseSettings.studentAccessHelp1' | educatorLocale | async}}
+                                        <strong>{{'common.off' | educatorLocale | async}}</strong>,
+                                        {{'courseSettings.studentAccessHelp2' | educatorLocale | async}}
+                                    </small>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </li>
+                    <li ngbNavItem="security" *ngIf="security">
+                        <a ngbNavLink><i class="fa fa-shield-alt"></i> {{'common.security' | educatorLocale |
+                            async}}</a>
+                        <ng-template ngbNavContent formGroupName="security">
+                            <div class="form-row">
+                                <div class="form-group col-md-12" *ngIf="allowMultipleLogins">
+                                    <label for="inputAllowMultipleLogins">Security</label>
+                                    <select formControlName="allowMultipleLogins" id="inputAllowMultipleLogins"
+                                        class="custom-select" aria-describedby="allowMultipleLoginsHelp">
+                                        <option value="">{{'courseSettings.allowMultipleLogins' | educatorLocale |
+                                            async}}</option>
+                                        <option value="no">{{'common.no' | educatorLocale | async}}</option>
+                                        <option value="yes">{{'common.yes' | educatorLocale | async}}</option>
+                                    </select>
+                                    <small id="allowMultipleLoginsHelp" class="form-text text-muted">
+                                        {{'courseSettings.allowMultipleLoginsHelpMessage' | educatorLocale | async}}
+                                    </small>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </li>
+                    <li ngbNavItem="courseMeetingTimes">
+                        <a ngbNavLink><i class="fa fa-clock"></i> {{'courseSettings.meetingTimes' | educatorLocale |
+                            async}}</a>
+                        <ng-template ngbNavContent formArrayName="courseMeetingTimes">
+                            <div class="form-row">
+                                <div class="form-group col-md-4 font-weight-bold">
+                                    {{'common.day' | educatorLocale | async}}
+                                </div>
+                                <div class="form-group col-md-4 font-weight-bold">
+                                    {{'common.startTime' | educatorLocale | async}}
+                                </div>
+                                <div class="form-group col-md-4 font-weight-bold">
+                                    {{'common.endTime' | educatorLocale | async}}
+                                </div>
+                            </div>
+                            <div *ngFor="let courseMeetingTimeInterval of courseMeetingTimes.controls; let i=index">
+                                <ng-container [formGroupName]="i">
+                                    <div class="form-row">
+                                        <div class="form-group col-md-4">
+                                            <label>{{ courseMeetingTimeInterval.get('day').value }}</label>
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <ngb-timepicker formControlName="start" [spinners]=false [meridian]=true
+                                                aria-describedby="invalidCourseMeetingTime">
+                                            </ngb-timepicker>
+                                            <small id="invalidCourseMeetingTime" class="form-text text-danger"
+                                                *ngIf="isSubmitted && courseSettingsForm.get('courseMeetingTimes')?.controls[i].errors">
+                                                {{
+                                                courseSettingsForm.get('courseMeetingTimes')?.controls[i].errors?.endBeforeStart
+                                                ? ('courseSettings.startTimeBeforeEndTime' | educatorLocale | async) :
+                                                ('courseSettings.enterBothStartAndEndTimes' | educatorLocale | async) }}
+                                            </small>
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <ngb-timepicker formControlName="end" [spinners]=false [meridian]=true
+                                                aria-describedby="invalidCourseMeetingTime">
+                                            </ngb-timepicker>
+                                        </div>
+                                    </div>
+                                </ng-container>
+                            </div>
+                        </ng-template>
+                    </li>
+                    <li ngbNavItem="audioVideo">
+                        <a ngbNavLink><i class="fa fa-video"></i> {{'courseSettings.audioVideo' | educatorLocale |
+                            async}}</a>
+                        <ng-template ngbNavContent formGroupName="audioVideo">
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label for="inputActivateAudioVideo">{{'courseSettings.activateAudioVideo' |
+                                        educatorLocale | async}}</label>
+                                    <select formControlName="activateAudioVideo" id="inputActivateAudioVideo"
+                                        class="custom-select">
+                                        <option [ngValue]="false">{{'common.no' | educatorLocale | async}}</option>
+                                        <option [ngValue]="true">{{'common.yes' | educatorLocale | async}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </li>
+                    <li ngbNavItem="manageExemptions">
+                        <a ngbNavLink><i class="fa fa-book"></i> {{ "courseSettings.manageExemptions" | educatorLocale |
+                            async
+                            }}</a>
+                        <ng-template ngbNavContent>
+                            <ul ngbNav #nav="ngbNav" activeId="exemptions" class="nav-tabs" [animation]="false">
+                                <li ngbNavItem="createExemption">
+                                    <a ngbNavLink (click)="createExemptionForm('create')"><i class="fa fa-book"></i> {{
+                                        "courseSettings.exemptions" |
+                                        educatorLocale | async
+                                        }}</a>
+                                    <ngContainer *ngTemplateOutlet="createExemptions"></ngContainer>
+                                </li>
+
+                                <li ngbNavItem="exemptions">
+                                    <a ngbNavLink (click)="createExemptionForm('edit')"><i class="fa fa-book"></i> {{
+                                        "courseSettings.exemptions" |
+                                        educatorLocale | async
+                                        }}</a>
+                                    <ngContainer *ngTemplateOutlet="editExemptions"></ngContainer>
+                                </li>
+                            </ul>
+                        </ng-template>
+                    </li>
+                </ul>
+
+                <div [ngbNavOutlet]="nav" class="mt-2"></div>
+                <ngb-tabset>
+                    <ngb-tab title="Create Exemptions" id="createExemptionsTab">
+                        <ng-template ngbTabContent>
+                            <ng-container [formGroup]="courseSettingsForm">
+                                <ng-template ngbNavContent #createExemptions formArrayName="exemptions">
+                                    <div *ngFor="let exemption of courseSettingsForm.get('exemptions').controls; let i = index"
+                                        [formGroupName]="i">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <div>
+                                                    <label for="inputRuleName">Rule Name</label>
+                                                    <input formControlName="ruleName" type="text" class="form-control"
+                                                        id="inputRuleName" placeholder="Rule Name"
+                                                        aria-describedby="invalidRuleName" />
+                                                    <div aria-describedby="invalidRuleName" class="invalid-feedback"
+                                                        *ngIf="isSubmitted && exemption.get('ruleName').errors">
+                                                        Rule Name is {{ exemption.get('ruleName').errors?.required ?
+                                                        'required' : 'invalid' }}.
+                                                    </div>
+                                                </div>
+                                                <div class="checboxList">
+                                                    <div *ngFor="let assessment of assessments">
+                                                        <input type="checkbox" id="checkbox_toggle"
+                                                            (change)="selectAssessment(assessment.title, $event.target.checked)" />
+                                                        <label for="checkbox_toggle" class="hamburger">
+                                                            <span class="primary">{{ assessment.type }}</span>
+                                                            {{ assessment.title }}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="float-right mt-2">
+                                                    <span class="d-block">3 of 24 selected</span>
+                                                    <div>
+                                                        <button class="btn btn-secondary">Clear</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <div>
+                                                    <label for="inputReasonForExemption">Reason for Exemption</label>
+                                                    <input formControlName="reasonForExemption" type="text"
+                                                        class="form-control" id="inputReasonForExemption"
+                                                        placeholder="Reason for Exemption"
+                                                        aria-describedby="invalidReasonForExemption" />
+                                                    <div aria-describedby="invalidReasonForExemption"
+                                                        class="invalid-feedback"
+                                                        *ngIf="isSubmitted && exemption.get('reasonForExemption').errors">
+                                                        Reason for Exemption is {{
+                                                        exemption.get('reasonForExemption').errors?.required ?
+                                                        'required' : 'invalid' }}.
+                                                    </div>
+                                                </div>
+                                                <div *ngIf="exemption.get('exemptionCondition')">
+                                                    <label for="exemptionCondition">Exemption Condition</label>
+                                                    <select formControlName="exemptionCondition" id="exemptionCondition"
+                                                        class="custom-select">
+                                                        <option value="All New enrollment">All New enrollment</option>
+                                                        <option value="New Enrollment with Honors">New Enrollment with
+                                                            Honors</option>
+                                                        <option value="New Enrollment with Non-Honors">New Enrollment
+                                                            with Non-Honors</option>
+                                                    </select>
+                                                </div>
+                                                <!-- Add other fields related to exemptions as needed -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </ng-container>
+                        </ng-template>
+                    </ngb-tab>
+
+                    <ngb-tab title="Edit Exemptions" id="editExemptionsTab">
+                        <ng-template ngbTabContent>
+                            <ng-container [formGroup]="courseSettingsForm">
+                                <ng-template ngbNavContent #editExemptions formArrayName="exemptions">
+                                    <div *ngFor="let exemption of courseSettingsForm.get('exemptions').controls; let i = index"
+                                        [formGroupName]="i">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <div>
+                                                    <label for="inputRuleName">Rule Name</label>
+                                                    <input formControlName="ruleName" type="text" class="form-control"
+                                                        id="inputRuleName" placeholder="Rule Name"
+                                                        aria-describedby="invalidRuleName" />
+                                                    <div aria-describedby="invalidRuleName" class="invalid-feedback"
+                                                        *ngIf="isSubmitted && exemption.get('ruleName').errors">
+                                                        Rule Name is {{ exemption.get('ruleName').errors?.required ?
+                                                        'required' : 'invalid' }}.
+                                                    </div>
+                                                </div>
+                                                <div class="checboxList">
+                                                    <div *ngFor="let rule of rules">
+                                                        <input type="checkbox" id="checkbox_toggle"
+                                                            [checked]="rule === exemption.get('ruleName').value"
+                                                            (change)="selectRule(rule)" />
+                                                        <label for="checkbox_toggle" class="hamburger">
+                                                            {{ rule }}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="float-right mt-2">
+                                                    <div>
+                                                        <button class="btn btn-danger">Delete</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <div>
+                                                    <label for="inputReasonForExemption">Reason for Exemption</label>
+                                                    <input formControlName="reasonForExemption" type="text"
+                                                        class="form-control" id="inputReasonForExemption"
+                                                        placeholder="Reason for Exemption"
+                                                        aria-describedby="invalidReasonForExemption" />
+                                                    <div aria-describedby="invalidReasonForExemption"
+                                                        class="invalid-feedback"
+                                                        *ngIf="isSubmitted && exemption.get('reasonForExemption').errors">
+                                                        Reason for Exemption is {{
+                                                        exemption.get('reasonForExemption').errors?.required ?
+                                                        'required' : 'invalid' }}.
+                                                    </div>
+                                                </div>
+                                                <div class="checboxList">
+                                                    <div *ngFor="let assessment of assessments">
+                                                        <input type="checkbox" id="checkbox_toggle" />
+                                                        <label for="checkbox_toggle" class="hamburger">
+                                                            <span class="primary">{{ assessment.type }}</span>
+                                                            {{ assessment.title }}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div class="float-right mt-2">
+                                                    <span class="d-block">3 of 24 selected</span>
+                                                    <div>
+                                                        <button class="btn btn-secondary">Clear</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </ng-container>
+                        </ng-template>
+                    </ngb-tab>
+
+
+                </ngb-tabset>
+            </div>
+            <div class="text-right">
+                <button [disabled]="!courseSettingsForm.dirty || isSaving" type="submit" class="btn btn-primary">
+                    <ng-container *ngIf="isSaving;else notSaving">{{'common.saving' | educatorLocale |
+                        async}}</ng-container>
+                    <ng-template #notSaving>
+                        <ng-container
+                            *ngIf="isSavedSuccessfully && !courseSettingsForm.dirty;else waitingToBeSaved">{{'common.changesSaved'
+                            | educatorLocale | async}}</ng-container>
+                        <ng-template #waitingToBeSaved>{{'common.save' | educatorLocale | async}}</ng-template>
+                    </ng-template>
+                </button>
+            </div>
+        </form>
+    </div>
+</ng-container>
