@@ -105,13 +105,10 @@ export class CourseSettingsDialogComponent implements OnInit {
     private franchiseConfigStore: Store<FranchiseConfigState>
   ) {}
 
-  private createExemptionFormGroup(exemption: ExemptionRule): FormGroup {
-    return this.fb.group({
-      ruleName: this.fb.control(exemption.ruleName),
-      reasonForExemption: this.fb.control(exemption.reasonForExemption),
-      exemptionCondition: this.fb.control(exemption.exemptionCondition),
-      assessments: this.fb.array(exemption.assessments.map(assessment => this.fb.control(assessment))),
-    });
+  showExemptionFormComponent: boolean = false;
+
+  showExemptionForm() {
+    this.showExemptionFormComponent = true;
   }
 
   ngOnInit(): void {
