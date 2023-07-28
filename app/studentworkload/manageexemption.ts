@@ -22,12 +22,6 @@ export class ExemptionFormComponent implements OnInit {
       assessments: this.fb.array([]),
       exemptionCondition: [null, Validators.required],
     });
-
-    // Set the first rule as preselected and update the form
-    if (this.exemptionRules.length > 0) {
-      this.exemptionForm.controls.ruleName.setValue(this.exemptionRules[0].ruleName);
-      this.onRuleNameSelection(this.exemptionRules[0].ruleName);
-    }
   }
 
   get assessments(): FormArray {
@@ -37,9 +31,6 @@ export class ExemptionFormComponent implements OnInit {
   onRuleNameSelection(ruleName: string) {
     const selectedRule = this.exemptionRules.find((rule) => rule.ruleName === ruleName);
     if (selectedRule) {
-      this.exemptionForm.controls.exemptionCondition.setValue(selectedRule.exemptionCondition);
-      this.exemptionForm.controls.reasonForExemption.setValue(selectedRule.reasonForExemption);
-
       // Clear existing assessments
       while (this.assessments.length !== 0) {
         this.assessments.removeAt(0);

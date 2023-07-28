@@ -1,54 +1,3 @@
-<ul class="nav nav-tabs">
-  <li class="nav-item">
-    <a
-      class="nav-link"
-      [ngClass]="{ active: !isEditingExemption }"
-      (click)="switchToCreateExemptionForm()"
-    >
-      Create Exemption
-    </a>
-  </li>
-  <li class="nav-item">
-    <a
-      class="nav-link"
-      [ngClass]="{ active: isEditingExemption }"
-      (click)="switchToEditExemptionForm()"
-    >
-      Edit Exemption
-    </a>
-  </li>
-</ul>
-
-<div class="tab-content mt-3">
-  <!-- Create Exemption Form -->
-  <div class="tab-pane fade show" [ngClass]="{ active: !isEditingExemption }">
-    <form [formGroup]="exemptionForm">
-      <!-- Form fields for create exemption form -->
-      <div class="form-group">
-        <label for="ruleName">Rule Name</label>
-        <input id="ruleName" type="text" class="form-control" formControlName="ruleName">
-      </div>
-      <!-- Other form fields for create exemption form -->
-
-      <button type="button" class="btn btn-primary" (click)="onSave()">Save Exemption</button>
-    </form>
-  </div>
-
-  <!-- Edit Exemption Form -->
-  <div class="tab-pane fade show" [ngClass]="{ active: isEditingExemption }">
-    <form [formGroup]="exemptionForm">
-      <!-- Form fields for edit exemption form -->
-      <div class="form-group">
-        <label for="ruleName">Rule Name</label>
-        <input id="ruleName" type="text" class="form-control" formControlName="ruleName" disabled>
-      </div>
-      <!-- Other form fields for edit exemption form -->
-
-      <button type="button" class="btn btn-primary" (click)="onSave()">Save Exemption</button>
-    </form>
-  </div>
-</div>
-
 <div>
   <ul class="nav nav-tabs">
     <li class="nav-item">
@@ -70,7 +19,29 @@
         <!-- Form fields for create exemption form -->
         <div class="form-group">
           <label for="ruleName">Rule Name</label>
-          <input id="ruleName" type="text" class="form-control" formControlName="ruleName">
+          <select id="ruleName" class="form-control" formControlName="ruleName" (change)="onRuleNameSelection($event.target.value)">
+            <option *ngFor="let rule of exemptionRules" [value]="rule.ruleName">{{ rule.ruleName }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="reasonForExemption">Reason for Exemption</label>
+          <input id="reasonForExemption" type="text" class="form-control" formControlName="reasonForExemption">
+        </div>
+        <div class="form-group">
+          <label for="exemptionCondition">Exemption Condition</label>
+          <select id="exemptionCondition" class="form-control" formControlName="exemptionCondition">
+            <!-- Replace the options below with the actual exemption conditions you want to provide -->
+            <option value="Option 1">Option 1</option>
+            <option value="Option 2">Option 2</option>
+            <option value="Option 3">Option 3</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Assessments</label>
+          <div *ngFor="let assessment of assessments.controls; let i = index" class="form-check">
+            <input class="form-check-input" type="checkbox" [formControl]="assessment">
+            <label class="form-check-label">{{ assessment.value }}</label>
+          </div>
         </div>
         <!-- Other form fields for create exemption form -->
 
@@ -84,7 +55,20 @@
         <!-- Form fields for edit exemption form -->
         <div class="form-group">
           <label for="ruleName">Rule Name</label>
-          <input id="ruleName" type="text" class="form-control" formControlName="ruleName" disabled>
+          <select id="ruleName" class="form-control" formControlName="ruleName" disabled>
+            <option *ngFor="let rule of exemptionRules" [value]="rule.ruleName">{{ rule.ruleName }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="reasonForExemption">Reason for Exemption</label>
+          <input id="reasonForExemption" type="text" class="form-control" formControlName="reasonForExemption">
+        </div>
+        <div class="form-group">
+          <label>Assessments</label>
+          <div *ngFor="let assessment of assessments.controls; let i = index" class="form-check">
+            <input class="form-check-input" type="checkbox" [formControl]="assessment">
+            <label class="form-check-label">{{ assessment.value }}</label>
+          </div>
         </div>
         <!-- Other form fields for edit exemption form -->
 
