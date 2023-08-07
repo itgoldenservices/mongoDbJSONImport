@@ -1,0 +1,22 @@
+{
+    "manageExemption": {
+    "createExemption": "Create Exemption",
+    "editExemption": "Edit Exemption",
+    "ruleNameLabel": "Rule Name",
+    "assessmentsLabel": "Assessments",
+    "exemptionConditionLabel": "Exemption Condition",
+    "reasonForExemptionLabel": "Reason for Exemption",
+    "selectExemptionConditionOption": "Select Exemption Condition",
+    "allNewEnrollmentOption": "All New Enrollment",
+    "newEnrollmentWithHonorsOption": "New Enrollment with Honors",
+    "newEnrollmentWithNonHonorsOption": "New Enrollment with Non-Honors",
+    "reasonForExemptionRequiredMessage": "Reason for Exemption is required.",
+    "exemptionConditionRequiredMessage": "Exemption Condition is required.",
+    "ruleNameRequiredMessage": "Rule Name is required.",
+    "noExemptionRulesExistMessage": "No Exemption Rules Exist.",
+    "clearButton": "Clear",
+    "deleteButton": "Delete",
+    "saveButton": "Save"
+  }
+}
+  

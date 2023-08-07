@@ -103,7 +103,7 @@ export class CourseSettingsDialogComponent implements OnInit {
     private messageService: MessageService,
     private localeStore: Store<LocaleState>,
     private franchiseConfigStore: Store<FranchiseConfigState>
-  ) {}
+  ) { }
 
   showExemptionFormComponent: boolean = false;
 
@@ -129,9 +129,9 @@ export class CourseSettingsDialogComponent implements OnInit {
         this.courseId.disable();
 
         // Set value for exemption form group
-      const exemptions = courseSettings?.exemptionRules || [];
-      const exemptionFormArray = this.fb.array(exemptions.map(exemption => this.createExemptionFormGroup(exemption)));
-      this.courseSettingsForm.setControl('exemptions', exemptionFormArray);
+        const exemptions = courseSettings?.exemptionRules || [];
+        const exemptionFormArray = this.fb.array(exemptions.map(exemption => this.createExemptionFormGroup(exemption)));
+        this.courseSettingsForm.setControl('exemptions', exemptionFormArray);
 
 
         if (this.enrollmentManager.instructorsChangeEnrollmentOptions === "No") {
@@ -326,54 +326,41 @@ export class CourseSettingsDialogComponent implements OnInit {
     }
   }
 
+
   onSubmit() {
-    this.formStatus = FormStatus.SUBMITTED;
-    if (this.courseSettingsForm.valid) {
-      this.formStatus = FormStatus.SAVING;
-      const updatedCourseSettings = getDirtyValues(this.courseSettingsForm) as CourseSettings;
-      const course: CourseListEntry = this.config.data.course;
-      this.courseSettingsService.patchCourseSettings(course, { courseSettings: updatedCourseSettings }).subscribe(
-        () => {
-          this.errorMessage = undefined;
-          this.checkIfFormValuesHaveChangedSubscription.unsubscribe();
-          this.checkIfFormValuesHaveChangedSubscription = markAsPristineIfFormValueEqualsOriginal(this.courseSettingsForm);
-          this.courseSettingsForm.markAsPristine();
-          this.formStatus = FormStatus.SAVED_SUCCESSFULLY;
-
-          const newValues = {
-            courseName: updatedCourseSettings?.courseInformation?.courseName,
-            courseId: updatedCourseSettings?.courseInformation?.courseId,
-          };
-
-          if (updatedCourseSettings?.courseInformation?.courseName || updatedCourseSettings?.courseInformation?.courseId) {
-            this.store.dispatch(
-              NavbarComponentActions.updateNavbarCourse({
-                course,
-                newValues,
-              })
-            );
-          }
-
-          this.messageService.add({
-            severity: "success",
-            summary: this.locales["common"]?.["success"],
-            detail: this.locales["courseSettings"]?.["settingsSavedSuccessfully"],
-          });
-
-          this.ref.close(newValues);
-        },
-        (error: HttpErrorResponse) => {
-          this.formStatus = FormStatus.FAILED_TO_SAVE;
-          this.errorMessage = this.locales?.["apiMessages"]?.[error.error];
-        }
-      );
-    } else {
-      Object.entries(this.courseSettingsForm.controls).forEach(([controlKey, control]) => {
-        if (control.valid === false) {
-          this.activeTab = controlKey;
-          return;
-        }
+    // Rest of the form submission logic...
+    if (this.manageExemption && this.manageExemption.touched && this.manageExemption && !this.courseSettingsForm.touched) {
+      // Only manageExemption form is touched, call its onExemptionFormValuesChange method
+      this.onExemptionFormValuesChange({
+        formValues: this.manageExemption.formValues,
+        touched: true
       });
     }
+
+    if (this.courseSettingsForm.touched && this.manageExemption && this.manageExemption.touched) {
+      // Both forms are touched, call both save methods
+
+      // Use the courseSettingsService to save the form data
+      this.courseSettingsService.patchCourseSettings(this.courseSettingsForm.value).subscribe(
+        () => {
+          console.log('Course Settings Form Data Saved');
+        },
+        (error) => {
+          console.error('Error saving Course Settings Form Data:', error);
+        }
+      );
+    } else if (this.courseSettingsForm.touched && this.manageExemption && this.!manageExemption.touched)) {
+      // Only courseSettingsForm is touched, call its save method
+      this.courseSettingsService.patchCourseSettings(this.courseSettingsForm.value).subscribe(
+        () => {
+          console.log('Course Settings Form Data Saved');
+        },
+        (error) => {
+          console.error('Error saving Course Settings Form Data:', error);
+        }
+      );
+    }
+
+    // ... other component methods ...
   }
 }

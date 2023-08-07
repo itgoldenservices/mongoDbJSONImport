@@ -2,12 +2,12 @@
   <ul class="nav nav-tabs">
     <li class="nav-item">
       <a class="nav-link" [ngClass]="{ active: !isEditingExemption }" (click)="switchToCreateExemptionForm()">
-        Create Exemption
+        {{ locale.createExemption }}
       </a>
     </li>
     <li class="nav-item">
       <a class="nav-link" [ngClass]="{ active: isEditingExemption }" (click)="switchToEditExemptionForm()">
-        Edit Exemption
+        {{ locale.editExemption }}
       </a>
     </li>
   </ul>
@@ -15,64 +15,132 @@
   <div class="tab-content mt-3">
     <!-- Create Exemption Form -->
     <div class="tab-pane fade" [ngClass]="{ show: !isEditingExemption, active: !isEditingExemption }">
-      <form [formGroup]="exemptionForm">
+      <form [formGroup]="exemptionForm" (ngSubmit)="onSave()" novalidate>
         <!-- Form fields for create exemption form -->
-        <div class="form-group">
-          <label for="ruleName">Rule Name</label>
-          <select id="ruleName" class="form-control" formControlName="ruleName" (change)="onRuleNameSelection($event.target.value)">
-            <option *ngFor="let rule of exemptionRules" [value]="rule.ruleName">{{ rule.ruleName }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="reasonForExemption">Reason for Exemption</label>
-          <input id="reasonForExemption" type="text" class="form-control" formControlName="reasonForExemption">
-        </div>
-        <div class="form-group">
-          <label for="exemptionCondition">Exemption Condition</label>
-          <select id="exemptionCondition" class="form-control" formControlName="exemptionCondition">
-            <!-- Replace the options below with the actual exemption conditions you want to provide -->
-            <option value="Option 1">Option 1</option>
-            <option value="Option 2">Option 2</option>
-            <option value="Option 3">Option 3</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Assessments</label>
-          <div *ngFor="let assessment of assessments.controls; let i = index" class="form-check">
-            <input class="form-check-input" type="checkbox" [formControl]="assessment">
-            <label class="form-check-label">{{ assessment.value }}</label>
+        <div class="form-row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="ruleName">{{ locale.ruleNameLabel }}</label>
+              <input id="ruleNameInput" type="text" class="form-control" formControlName="ruleName" required />
+              <!-- Validation message -->
+              <div *ngIf="exemptionForm.get('ruleName').invalid && (exemptionForm.get('ruleName').dirty || exemptionForm.get('ruleName').touched)">
+                <small class="text-danger">{{ locale.ruleNameRequiredMessage }}</small>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ locale.assessmentsLabel }}</label>
+              <div class="checboxList">
+                <div *ngFor="let assessment of assessments.controls">
+                  <input type="checkbox" id="checkbox_toggle" [checked]="assessment.value.checked"
+                    (change)="selectAssessment(assessment, $event.target.checked)" />
+                  <label for="checkbox_toggle" class="hamburger">
+                    <span class="primary">{{ assessment.value.type }}</span>
+                    {{ assessment.value.title }}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="float-right mt-2">
+              <span class="d-block">{{ selectedAssessments }} of {{ assessments.length }} selected</span>
+              <div>
+                <button class="btn btn-secondary" (click)="clearAllSelectedAssessments()">{{ locale.clearButton }}</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="exemptionCondition">{{ locale.exemptionConditionLabel }}</label>
+              <select id="exemptionCondition" class="form-control" formControlName="exemptionCondition" required>
+                <!-- Replace the options below with the actual exemption conditions you want to provide -->
+                <option value="">{{ locale.selectExemptionConditionOption }}</option>
+                <option value="All New enrollment">{{ locale.allNewEnrollmentOption }}</option>
+                <option value="New Enrollment with Honors">{{ locale.newEnrollmentWithHonorsOption }}</option>
+                <option value="New Enrollment with Non-Honors">{{ locale.newEnrollmentWithNonHonorsOption }}</option>
+              </select>
+              <!-- Validation message -->
+              <div *ngIf="exemptionForm.get('exemptionCondition').invalid && (exemptionForm.get('exemptionCondition').dirty || exemptionForm.get('exemptionCondition').touched)">
+                <small class="text-danger">{{ locale.exemptionConditionRequiredMessage }}</small>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="reasonForExemption">{{ locale.reasonForExemptionLabel }}</label>
+              <input id="reasonForExemption" type="text" class="form-control" formControlName="reasonForExemption" required />
+              <!-- Validation message -->
+              <div *ngIf="exemptionForm.get('reasonForExemption').invalid && (exemptionForm.get('reasonForExemption').dirty || exemptionForm.get('reasonForExemption').touched)">
+                <small class="text-danger">{{ locale.reasonForExemptionRequiredMessage }}</small>
+              </div>
+            </div>
           </div>
         </div>
-        <!-- Other form fields for create exemption form -->
 
-        <button type="button" class="btn btn-primary" (click)="onSave()">Save Exemption</button>
+        <div class="text-center mt-3">
+          <button class="btn btn-primary" type="submit" [disabled]="!exemptionForm.valid">{{ locale.saveButton }}</button>
+        </div>
       </form>
     </div>
 
     <!-- Edit Exemption Form -->
     <div class="tab-pane fade" [ngClass]="{ show: isEditingExemption, active: isEditingExemption }">
-      <form [formGroup]="exemptionForm">
+      <div *ngIf="exemptionRules.length === 0" class="form-row">{{ locale.noExemptionRulesExistMessage }}</div>
+      <form *ngIf="exemptionRules.length > 0" [formGroup]="exemptionForm" (ngSubmit)="onSave()" novalidate>
         <!-- Form fields for edit exemption form -->
-        <div class="form-group">
-          <label for="ruleName">Rule Name</label>
-          <select id="ruleName" class="form-control" formControlName="ruleName" disabled>
-            <option *ngFor="let rule of exemptionRules" [value]="rule.ruleName">{{ rule.ruleName }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="reasonForExemption">Reason for Exemption</label>
-          <input id="reasonForExemption" type="text" class="form-control" formControlName="reasonForExemption">
-        </div>
-        <div class="form-group">
-          <label>Assessments</label>
-          <div *ngFor="let assessment of assessments.controls; let i = index" class="form-check">
-            <input class="form-check-input" type="checkbox" [formControl]="assessment">
-            <label class="form-check-label">{{ assessment.value }}</label>
+        <div class="form-row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="ruleName">{{ locale.ruleNameLabel }}</label>
+              <input id="ruleNameInput" type="text" class="form-control" formControlName="ruleName" readonly />
+
+              <div class="checboxList">
+                <div *ngFor="let rule of exemptionRules">
+                  <input type="checkbox" id="checkbox_toggle" [checked]="rule.ruleName === exemptionForm.get('ruleName').value"
+                    (change)="onRuleNameSelection(rule)" />
+                  <label for="checkbox_toggle" class="hamburger">
+                    {{ rule.ruleName }}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="float-right mt-2">
+              <div>
+                <button class="btn btn-danger" (click)="deleteExemption()">{{ locale.deleteButton }}</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="reasonForExemption">{{ locale.reasonForExemptionLabel }}</label>
+              <input id="reasonForExemption" type="text" class="form-control" formControlName="reasonForExemption" required />
+              <!-- Validation message -->
+              <div *ngIf="exemptionForm.get('reasonForExemption').invalid && (exemptionForm.get('reasonForExemption').dirty || exemptionForm.get('reasonForExemption').touched)">
+                <small class="text-danger">{{ locale.reasonForExemptionRequiredMessage }}</small>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>{{ locale.assessmentsLabel }}</label>
+              <div class="checboxList">
+                <div *ngFor="let assessment of assessments.controls">
+                  <input type="checkbox" id="checkbox_toggle"
+                    [checked]="assessment.value.checked"
+                    (change)="selectAssessment(assessment, $event.target.checked)" />
+                  <label for="checkbox_toggle" class="hamburger">
+                    <span class="primary">{{ assessment.value.type }}</span>
+                    {{ assessment.value.title }}
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="float-right mt-2">
+              <span class="d-block">{{ selectedAssessments }} of {{ assessments.length }} selected</span>
+              <div>
+                <button class="btn btn-secondary" (click)="clearAllSelectedAssessments()">{{ locale.clearButton }}</button>
+              </div>
+            </div>
           </div>
         </div>
-        <!-- Other form fields for edit exemption form -->
 
-        <button type="button" class="btn btn-primary" (click)="onSave()">Save Exemption</button>
+        <div class="text-center mt-3">
+          <button class="btn btn-primary" type="submit" [disabled]="!exemptionForm.valid">{{ locale.saveButton }}</button>
+        </div>
       </form>
     </div>
   </div>
