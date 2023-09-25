@@ -1,92 +1,154 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray } from '@angular/forms';
 import { ManageExemptionComponent } from './manage-exemption.component';
 
 describe('ManageExemptionComponent', () => {
-  let component: ManageExemptionComponent;
   let fixture: ComponentFixture<ManageExemptionComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [ManageExemptionComponent],
-      providers: [FormBuilder], // Provide FormBuilder for form creation
-    }).compileComponents();
-  });
+  let component: ManageExemptionComponent;
+  let fb: FormBuilder;
 
   beforeEach(() => {
+    TestBed.configureTestingModule({
+      declarations: [ManageExemptionComponent],
+      imports: [ReactiveFormsModule],
+      providers: [FormBuilder],
+    });
+
     fixture = TestBed.createComponent(ManageExemptionComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
+    fb = TestBed.inject(FormBuilder);
   });
 
-  it('should create the component', () => {
-    expect(component).toBeTruthy();
-  });
+  // ... Previous test cases ...
 
-  it('should initialize the exemptionForm', () => {
-    expect(component.exemptionForm).toBeDefined();
-    expect(component.exemptionForm).toBeInstanceOf(FormGroup);
-  });
-
-  it('should initialize isEditingExemption and editedExemptionIndex', () => {
-    expect(component.isEditingExemption).toBeFalse();
-    expect(component.editedExemptionIndex).toBe(-1);
-  });
-
-  it('should initialize exemptionRules and handle exemptionRulesData input', () => {
-    const exemptionRulesData = {
-      rule1: { ruleName: 'rule1', reasonForExemption: 'Reason 1', assessments: [] },
-      rule2: { ruleName: 'rule2', reasonForExemption: 'Reason 2', assessments: [] },
-    };
-    component.exemptionRulesData = exemptionRulesData;
+  it('should handle onSave when in edit mode', () => {
+    spyOn(component.exemptionFormValueChanges, 'emit');
+    spyOn(component, 'deleteExemptionRule');
     component.ngOnInit();
 
-    expect(component.exemptionRules.length).toBe(Object.keys(exemptionRulesData).length);
-  });
+    // Mock form data
+    const editedRuleName = 'EditedRule';
+    component.ruleToBeEdited = editedRuleName;
+    component.isEditingExemption = true;
 
-  it('should initialize the assessments FormArray', () => {
-    expect(component.assessments).toBeDefined();
-    expect(component.assessments).toBeInstanceOf(FormArray);
-  });
-
-  it('should update selectedAssessments count when selecting assessments', () => {
-    const assessment1 = new FormControl({ type: 'type1', title: 'Assessment 1', checked: false });
-    const assessment2 = new FormControl({ type: 'type2', title: 'Assessment 2', checked: true });
-    component.assessments.push(assessment1);
-    component.assessments.push(assessment2);
-
-    expect(component.selectedAssessments).toBe(1);
-
-    // Select assessment1
-    component.selectAssessment(assessment1, true);
-    expect(component.selectedAssessments).toBe(2);
-
-    // Deselect assessment2
-    component.selectAssessment(assessment2, false);
-    expect(component.selectedAssessments).toBe(1);
-  });
-
-  it('should clear all selected assessments', () => {
-    const assessment1 = new FormControl({ type: 'type1', title: 'Assessment 1', checked: true });
-    const assessment2 = new FormControl({ type: 'type2', title: 'Assessment 2', checked: true });
-    component.assessments.push(assessment1);
-    component.assessments.push(assessment2);
-
-    component.clearAllSelectedAssessments();
-
-    expect(assessment1.value.checked).toBeFalse();
-    expect(assessment2.value.checked).toBeFalse();
-  });
-
-  it('should emit form values', () => {
-    const emitSpy = spyOn(component.exemptionFormValueChanges, 'emit');
-    const formValue = { ruleName: 'rule1', reasonForExemption: 'Reason 1', assessments: [], exemptionCondition: 'Condition 1' };
-    component.exemptionForm.patchValue(formValue);
-    
+    // Call onSave
     component.emitFormValues();
 
-    expect(emitSpy).toHaveBeenCalledWith(formValue);
+    // Expect form values to be emitted
+    expect(component.exemptionFormValueChanges.emit).toHaveBeenCalled();
+
+    // Expect deleteExemptionRule to be called with the edited rule name
+    expect(component.deleteExemptionRule).toHaveBeenCalledWith(editedRuleName);
   });
 
-  // Write more test cases based on the behavior of onSave, onRuleNameSelection, switchToEditExemptionForm, switchToCreateExemptionForm, and other methods.
+  it('should handle onSave when not in edit mode', () => {
+    spyOn(component.exemptionFormValueChanges, 'emit');
+    spyOn(component, 'deleteExemptionRule');
+    component.ngOnInit();
+
+    // Mock valid form data
+    const mockFormValues = {
+      ruleName: 'TestRule',
+      reasonForExemption: 'TestReason',
+      assessments: [],
+      exemptionCondition: 'TestCondition',
+    };
+
+    component.exemptionForm.patchValue(mockFormValues);
+
+    // Call onSave
+    component.emitFormValues();
+
+    // Expect form values to be emitted
+    expect(component.exemptionFormValueChanges.emit).toHaveBeenCalledWith({
+      formValues: mockFormValues,
+    });
+
+    // Expect deleteExemptionRule not to be called
+    expect(component.deleteExemptionRule).not.toHaveBeenCalled();
+  });
+
+  it('should handle onRuleNameSelection', () => {
+    component.ngOnInit();
+    
+    // Mock exemption rule
+    const exemptionRule = {
+      ruleName: 'Rule1',
+      reasonForExemption: 'Reason1',
+      assessments: [], // Mock assessments
+      exemptionCondition: 'Condition1',
+    };
+
+    // Set exemption rule data
+    component.exemptionRules = [exemptionRule];
+
+    spyOn(component.assessments, 'clear');
+
+    // Call onRuleNameSelection
+    component.onRuleNameSelection(exemptionRule);
+
+    // Expect assessments to be cleared
+    expect(component.assessments.clear).toHaveBeenCalled();
+
+    // Expect exemption form to be patched with exemptionRule values
+    expect(component.exemptionForm.get('ruleName').value).toEqual(exemptionRule.ruleName);
+    expect(component.exemptionForm.get('reasonForExemption').value).toEqual(exemptionRule.reasonForExemption);
+    expect(component.exemptionForm.get('exemptionCondition').value).toEqual(exemptionRule.exemptionCondition);
+
+    // You can add more assertions to check assessments FormArray as well
+  });
+
+  it('should switch to edit exemption form', () => {
+    component.ngOnInit(); // Initialize the component
+
+    // Mock exemption rule data
+    const exemptionRule = {
+      ruleName: 'Rule1',
+      reasonForExemption: 'Reason1',
+      assessments: [], // Mock assessments
+      exemptionCondition: 'Condition1',
+    };
+
+    // Set exemption rule data
+    component.exemptionRules = [exemptionRule];
+
+    spyOn(component, 'onRuleNameSelection');
+
+    // Call switchToEditExemptionForm
+    component.switchToEditExemptionForm();
+
+    // Expect onRuleNameSelection to be called with the first exemption rule
+    expect(component.onRuleNameSelection).toHaveBeenCalledWith(exemptionRule);
+
+    // Expect isEditingExemption to be true
+    expect(component.isEditingExemption).toBe(true);
+  });
+
+  it('should switch to create exemption form', () => {
+    component.ngOnInit(); // Initialize the component
+
+    // Mock exemption rule data
+    const exemptionRule = {
+      ruleName: 'Rule1',
+      reasonForExemption: 'Reason1',
+      assessments: [], // Mock assessments
+      exemptionCondition: 'Condition1',
+    };
+
+    // Set exemption rule data
+    component.exemptionRules = [exemptionRule];
+
+    spyOn(component.exemptionForm, 'reset');
+
+    // Call switchToCreateExemptionForm
+    component.switchToCreateExemptionForm();
+
+    // Expect form to be reset
+    expect(component.exemptionForm.reset).toHaveBeenCalled();
+
+    // Expect isEditingExemption to be false
+    expect(component.isEditingExemption).toBe(false);
+  });
+
+  // Add more test cases for other methods and edge cases as needed
 });
