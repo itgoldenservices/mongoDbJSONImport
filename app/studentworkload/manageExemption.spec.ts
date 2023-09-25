@@ -21,6 +21,71 @@ describe('ManageExemptionComponent', () => {
 
   // ... Previous test cases ...
 
+  it('should get assessments FormArray', () => {
+    component.ngOnInit();
+    const assessmentsArray: FormArray = component.assessments;
+    expect(assessmentsArray).toBeTruthy();
+  });
+
+  it('should calculate the number of selected assessments', () => {
+    component.ngOnInit();
+    const assessmentsArray: FormArray = component.assessments;
+
+    // Set some assessments as selected
+    assessmentsArray.at(0).patchValue({ checked: true });
+    assessmentsArray.at(1).patchValue({ checked: false });
+    assessmentsArray.at(2).patchValue({ checked: true });
+
+    const selectedAssessmentsCount = component.selectedAssessments;
+    expect(selectedAssessmentsCount).toBe(2);
+  });
+
+  it('should select an assessment', () => {
+    component.ngOnInit();
+    const assessmentsArray: FormArray = component.assessments;
+
+    // Select an assessment
+    component.selectAssessment(assessmentsArray.at(0), true);
+
+    // Expect the assessment to be selected
+    expect(assessmentsArray.at(0).value.checked).toBeTruthy();
+  });
+
+  it('should emit form values when form is valid', () => {
+    spyOn(component.exemptionFormValueChanges, 'emit');
+    component.ngOnInit();
+
+    // Mock valid form values
+    const mockFormValues = {
+      ruleName: 'TestRule',
+      reasonForExemption: 'TestReason',
+      assessments: [],
+      exemptionCondition: 'TestCondition',
+    };
+
+    component.exemptionForm.patchValue(mockFormValues);
+    component.emitFormValues();
+
+    // Expect form values to be emitted
+    expect(component.exemptionFormValueChanges.emit).toHaveBeenCalledWith({
+      formValues: mockFormValues,
+    });
+  });
+
+  it('should delete an exemption rule', () => {
+    spyOn(component.deleteExemptionRule, 'emit');
+    component.ngOnInit();
+
+    // Mock exemption rule to be deleted
+    const ruleToDelete = 'RuleToDelete';
+    component.exemptionForm.controls.ruleName.setValue(ruleToDelete);
+
+    component.deleteExemption();
+
+    // Expect the deleteExemptionRule.emit method to be called with the rule name
+    expect(component.deleteExemptionRule.emit).toHaveBeenCalledWith(ruleToDelete);
+  });
+  
   it('should handle onSave when in edit mode', () => {
     spyOn(component.exemptionFormValueChanges, 'emit');
     spyOn(component, 'deleteExemptionRule');
@@ -94,8 +159,7 @@ describe('ManageExemptionComponent', () => {
     expect(component.exemptionForm.get('ruleName').value).toEqual(exemptionRule.ruleName);
     expect(component.exemptionForm.get('reasonForExemption').value).toEqual(exemptionRule.reasonForExemption);
     expect(component.exemptionForm.get('exemptionCondition').value).toEqual(exemptionRule.exemptionCondition);
-
-    // You can add more assertions to check assessments FormArray as well
+ 
   });
 
   it('should switch to edit exemption form', () => {
@@ -150,5 +214,5 @@ describe('ManageExemptionComponent', () => {
     expect(component.isEditingExemption).toBe(false);
   });
 
-  // Add more test cases for other methods and edge cases as needed
+  
 });
